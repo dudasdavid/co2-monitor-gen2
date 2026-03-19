@@ -71,6 +71,7 @@ class SystemData:
         self.idle_task_timestamp = 0
         self.serial_task_timestamp = 0
         self.storage_task_timestamp = 0
+        self.io_task_timestamp = 0
         self.io_expander_task_timestamp = 0
         self.imu_task_timestamp = 0
 
@@ -132,3 +133,14 @@ touch_start_y = 0
 last_y = 0
 
 indev = None
+
+# Max number of samples you expect (24h at 5 min)
+CO2_HISTORY_MAX = 12 * 24
+
+scd41_co2_peak_ppm = 400
+scd41_co2_threshold = 1800
+scd41_co2_detected = 0
+scd41_co2_history = [400] # Must contain 1 placeholder element
+scd41_co2_max_history_samples = 60
+
+history_loaded = False
