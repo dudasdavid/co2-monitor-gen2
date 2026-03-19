@@ -46,7 +46,7 @@ async def led_task(period = 1.0):
     log = Logger("led", debug_enabled=False)
     
     #Init
-    pin = Pin(44, Pin.OUT)
+    pin = Pin(43, Pin.OUT)
     np = neopixel.NeoPixel(pin, 18)
 
     phase = 0
