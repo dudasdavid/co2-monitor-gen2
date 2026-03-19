@@ -1,5 +1,5 @@
 from lv_port import init
-from math import ceil
+from math import ceil, sin
 import time
 import random
 
@@ -66,6 +66,85 @@ def swipe_event_cb(e):
     elif d == lv.DIR.RIGHT:
         prev_screen()
 
+def create_gradient_screen():
+    
+    lv = init()
+    
+    scr = lv.obj()
+
+    # Background color
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+
+    # main sharp ring
+    ring = lv.arc(scr)
+    ring.remove_style_all()
+    ring.remove_flag(lv.obj.FLAG.CLICKABLE)
+    ring.set_size(230, 230)
+    ring.align(lv.ALIGN.CENTER, 0, 0)
+    ring.set_rotation(270)
+    ring.set_bg_angles(0, 360)
+    ring.set_range(0, 100)
+    ring.set_value(100)
+    ring.set_style_pad_all(0, 0)
+    ring.set_style_radius(lv.RADIUS_CIRCLE, lv.PART.MAIN)
+    ring.set_style_clip_corner(False, lv.PART.MAIN)
+
+    ring.set_style_arc_width(20, lv.PART.MAIN)
+    ring.set_style_arc_color(lv.color_hex(0x00FF55), lv.PART.MAIN)
+    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
+    
+    # black shadow ring
+    ring2 = lv.arc(scr)
+    ring2.remove_style_all()
+    ring2.remove_flag(lv.obj.FLAG.CLICKABLE)
+    ring2.set_size(188, 188)
+    ring2.align(lv.ALIGN.CENTER, 0, 0)
+    ring2.set_rotation(270)
+    ring2.set_bg_angles(0, 360)
+    ring2.set_range(0, 100)
+    ring2.set_value(100)
+    ring2.set_style_pad_all(0, 0)
+    ring2.set_style_radius(lv.RADIUS_CIRCLE, lv.PART.MAIN)
+    ring2.set_style_clip_corner(False, lv.PART.MAIN)
+
+    ring2.set_style_arc_width(10, lv.PART.MAIN)
+    ring2.set_style_arc_color(lv.color_hex(0x000000), lv.PART.MAIN)
+    ring2.set_style_arc_opa(lv.OPA.TRANSP, lv.PART.MAIN)
+
+    ring2.set_style_shadow_color(lv.color_hex(0x000000), lv.PART.MAIN)
+    ring2.set_style_shadow_width(50, lv.PART.MAIN)
+    ring2.set_style_shadow_spread(20, lv.PART.MAIN)
+    ring2.set_style_shadow_opa(lv.OPA.COVER, lv.PART.MAIN)
+
+    phase = 0.0
+
+    def ring_breath_cb(timer):
+        nonlocal phase
+
+        phase += 0.8   # speed
+
+        s = (sin(phase) + 1) / 2  # 0..1
+
+        MIN_OPA = int(255 * 0.5)
+        MAX_OPA = 255
+
+        opa = int(MIN_OPA + s * (MAX_OPA - MIN_OPA))
+
+        ring.set_style_arc_opa(opa, lv.PART.MAIN)
+        ring.invalidate()
+
+    lv.timer_create(ring_breath_cb, 1500 , None)
+
+    # Enable swipe on the full screen
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    var.screens.append(scr)
+    var.screen_names.append("Gradient")
+    
+    #lv.screen_load(scr)
+    
+    return scr
+
 def create_dummy_screen():
     
     lv = init()
@@ -83,26 +162,6 @@ def create_dummy_screen():
     label = lv.label(scr)
     label.set_text('HELLO WORLD!')
     label.align(lv.ALIGN.CENTER, 0, -50)
-
-    # main sharp ring
-    ring = lv.arc(scr)
-    ring.remove_style_all()
-    ring.remove_flag(lv.obj.FLAG.CLICKABLE)
-    ring.set_size(240, 240)
-    ring.align(lv.ALIGN.CENTER, 0, 0)
-    ring.set_rotation(270)
-    ring.set_bg_angles(0, 360)
-    ring.set_range(0, 100)
-    ring.set_value(100)
-    ring.set_style_pad_all(0, 0)
-
-    ring.set_style_arc_width(10, lv.PART.MAIN)
-    ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
-    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
-
-    ring.set_style_arc_width(10, lv.PART.INDICATOR)
-    ring.set_style_arc_color(lv.color_hex(0x00FF55), lv.PART.INDICATOR)
-    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
 
     # Enable swipe on the full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
@@ -150,10 +209,8 @@ def create_co2_screen():
         return a
 
     # Inner glow layers
-    ring_g1 = make_ring(250, 14, lv.color_hex(0x00FF55), 55)
-    ring_g2 = make_ring(242, 18, lv.color_hex(0x00FF55), 36)
-    #ring_g3 = make_ring(235, 22, lv.color_hex(0x00FF55), 24)
-    #ring_g4 = make_ring(227, 26, lv.color_hex(0x00FF55), 12)
+    ring_g1 = make_ring(250, 13, lv.color_hex(0x00FF55), 55)
+    ring_g2 = make_ring(242, 19, lv.color_hex(0x00FF55), 24)
 
     # main sharp ring
     ring = lv.arc(scr)
@@ -221,11 +278,9 @@ def create_co2_screen():
         glow_state["opa"] = x
 
         ring_g1.set_style_arc_opa(55 + x // 1, lv.PART.INDICATOR)
-        ring_g2.set_style_arc_opa(36 + x // 2, lv.PART.INDICATOR)
-        #ring_g3.set_style_arc_opa(24 + x // 3, lv.PART.INDICATOR)
-        #ring_g4.set_style_arc_opa(12 + x // 4, lv.PART.INDICATOR)
+        ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
 
-    lv.timer_create(glow_timer_cb, 500, None)
+    lv.timer_create(glow_timer_cb, 1000, None)
 
     # -----------------------------
     # CO2 update
@@ -247,10 +302,8 @@ def create_co2_screen():
 
         ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
         ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
-        #ring_g3.set_style_arc_color(color, lv.PART.INDICATOR)
-        #ring_g4.set_style_arc_color(color, lv.PART.INDICATOR)
 
-    lv.timer_create(set_co2_cb, 500, None)
+    lv.timer_create(set_co2_cb, 1000, None)
 
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
@@ -485,10 +538,10 @@ def create_co2_chart_screen():
 
         chart.refresh()
         
-    lv.timer_create(update_co2_chart, 2000, None)
+    lv.timer_create(update_co2_chart, 3000, None)
     
-    chart.add_event_cb(co2_chart_draw_event_cb, lv.EVENT.DRAW_TASK_ADDED, None)
-    chart.add_flag(lv.obj.FLAG.SEND_DRAW_TASK_EVENTS)
+    #chart.add_event_cb(co2_chart_draw_event_cb, lv.EVENT.DRAW_TASK_ADDED, None)
+    #chart.add_flag(lv.obj.FLAG.SEND_DRAW_TASK_EVENTS)
 
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
@@ -531,7 +584,7 @@ def create_sensor_table():
     page.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
     table = lv.table(page)
-    table.set_size(SCREEN_W, 900)
+    table.set_size(SCREEN_W, 950)
     table.align(lv.ALIGN.TOP_LEFT, 0, 0)
 
     # ✅ Make sure table itself does NOT scroll -> removes 2nd scrollbar
@@ -546,7 +599,7 @@ def create_sensor_table():
 
     # 3 columns and 18 rows
     table.set_column_count(3)
-    table.set_row_count(19)
+    table.set_row_count(21)
 
     table.set_column_width(0, 5)
     table.set_column_width(1, 110)
@@ -568,10 +621,12 @@ def create_sensor_table():
     table.set_cell_value(12, 1, "Battery %")
     table.set_cell_value(13, 1, "USB")
     table.set_cell_value(14, 1, "Buttons")
-    table.set_cell_value(15, 1, "Date")
-    table.set_cell_value(16, 1, "Time")
-    table.set_cell_value(17, 1, "AP enabled")
-    table.set_cell_value(18, 1, "WiFi")
+    table.set_cell_value(15, 1, "RTC date")
+    table.set_cell_value(16, 1, "RTC time")
+    table.set_cell_value(17, 1, "Local date")
+    table.set_cell_value(18, 1, "Local time")
+    table.set_cell_value(19, 1, "AP enabled")
+    table.set_cell_value(20, 1, "WiFi")
 
     # Styles
     #table.set_style_bg_color(lv.color_hex(0x101010), 0)
@@ -601,21 +656,28 @@ def create_sensor_table():
         table.set_cell_value(13, 2, "{}".format(var.system_data.usb_connected))
         table.set_cell_value(14, 2, "{}".format(var.system_data.buttons))
 
-        timestamp = localtime_with_offset()
+        timestamp = var.system_data.time_rtc
         date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
         time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
         table.set_cell_value(15, 2, date_str)
         table.set_cell_value(16, 2, time_str)
 
-        table.set_cell_value(17, 2, "{}".format(var.ap_enabled))
-        if var.wifi_connected:
-            table.set_cell_value(18, 2, var.wifi_ip)
-        elif var.wifi_sleep:
-            table.set_cell_value(18, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
-        else:
-            table.set_cell_value(18, 2, "False")
 
-    lv.timer_create(table_update_cb, 500, None)
+        timestamp = localtime_with_offset()
+        date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
+        time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
+        table.set_cell_value(17, 2, date_str)
+        table.set_cell_value(18, 2, time_str)
+
+        table.set_cell_value(19, 2, "{}".format(var.ap_enabled))
+        if var.wifi_connected:
+            table.set_cell_value(20, 2, var.wifi_ip)
+        elif var.wifi_sleep:
+            table.set_cell_value(20, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
+        else:
+            table.set_cell_value(20, 2, "False")
+
+    lv.timer_create(table_update_cb, 1000, None)
 
     # Swipe on screen (fine)
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
