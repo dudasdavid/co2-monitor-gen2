@@ -8,7 +8,7 @@ import time
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("imu", debug_enabled=True)
+log = Logger("imu", debug_enabled=False)
 
 async def imu_task(i2c_bus, period = 1.0):
     #Init

@@ -10,7 +10,7 @@ import math
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("i2c", debug_enabled=True)
+log = Logger("i2c", debug_enabled=False)
 
 def compensate_humidity(rh_raw: float, t_raw: float, t_cal: float) -> float:
     """
