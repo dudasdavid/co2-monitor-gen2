@@ -1,6 +1,7 @@
 from lv_port import init
 from math import ceil
 import time
+import random
 
 # ---- Global variables ----
 import shared_variables as var
@@ -65,6 +66,53 @@ def swipe_event_cb(e):
     elif d == lv.DIR.RIGHT:
         prev_screen()
 
+def create_dummy_screen():
+    
+    lv = init()
+    
+    scr = lv.obj()
+
+    # Background color
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+
+    # Simple slider and label in the middle
+    slider = lv.slider(scr)
+    slider.set_size(180, 50)
+    slider.center()
+    
+    label = lv.label(scr)
+    label.set_text('HELLO WORLD!')
+    label.align(lv.ALIGN.CENTER, 0, -50)
+
+    # main sharp ring
+    ring = lv.arc(scr)
+    ring.remove_style_all()
+    ring.remove_flag(lv.obj.FLAG.CLICKABLE)
+    ring.set_size(240, 240)
+    ring.align(lv.ALIGN.CENTER, 0, 0)
+    ring.set_rotation(270)
+    ring.set_bg_angles(0, 360)
+    ring.set_range(0, 100)
+    ring.set_value(100)
+    ring.set_style_pad_all(0, 0)
+
+    ring.set_style_arc_width(10, lv.PART.MAIN)
+    ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
+    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
+
+    ring.set_style_arc_width(10, lv.PART.INDICATOR)
+    ring.set_style_arc_color(lv.color_hex(0x00FF55), lv.PART.INDICATOR)
+    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
+
+    # Enable swipe on the full screen
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    var.screens.append(scr)
+    var.screen_names.append("Dummy")
+    
+    #lv.screen_load(scr)
+    
+    return scr
 
 def create_co2_screen():
     lv = init()
@@ -131,11 +179,11 @@ def create_co2_screen():
     # Big CO2 number
     # -----------------------------
     co2_label = lv.label(scr)
-    co2_label.set_text("800")
+    co2_label.set_text("69")
     co2_label.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
     co2_label.set_style_text_font(lv.montserrat_96, 0)
     co2_label.center()
-    co2_label.align(lv.ALIGN.CENTER, 0, -10)
+    co2_label.align(lv.ALIGN.CENTER, 0, 0)
 
     # -----------------------------
     # ppm text
@@ -144,7 +192,7 @@ def create_co2_screen():
     ppm_label.set_text("ppm")
     ppm_label.set_style_text_color(lv.color_hex(0x00FF55), 0)
     ppm_label.set_style_text_font(lv.font_montserrat_20, 0)
-    ppm_label.align(lv.ALIGN.CENTER, 0, 48)
+    ppm_label.align(lv.ALIGN.CENTER, 0, 60)
 
     # -----------------------------
     # Optional title
@@ -153,7 +201,7 @@ def create_co2_screen():
     title_label.set_text("CO2")
     title_label.set_style_text_color(lv.color_hex(0x888888), 0)
     title_label.set_style_text_font(lv.font_montserrat_16, 0)
-    title_label.align(lv.ALIGN.CENTER, 0, -72)
+    title_label.align(lv.ALIGN.CENTER, 0, -75)
 
     # -----------------------------
     # Breathing animation
@@ -183,9 +231,8 @@ def create_co2_screen():
     # CO2 update
     # -----------------------------
     def set_co2_cb(t):
-        # max 4 chars as you requested
         value = int(var.sensor_data.co2_scd41)
-        txt = str(int(value))[:4]
+        txt = str(value)
         co2_label.set_text(txt)
 
         if value < 1000:
@@ -212,36 +259,243 @@ def create_co2_screen():
     var.screen_names.append("CO2")
 
     return scr
-    
 
-def create_dummy_screen():
-    
+def co2_chart_draw_event_cb(e):
     lv = init()
-    
+
+    draw_task = e.get_draw_task()
+    if draw_task is None:
+        return
+
+    if draw_task.get_type() != lv.DRAW_TASK_TYPE.LINE:
+        return
+
+    line_dsc = draw_task.get_line_dsc()
+    if line_dsc is None:
+        return
+
+    # Debug once if needed
+    # print("part:", line_dsc.base.part)
+
+    if line_dsc.base.part == lv.PART.ITEMS:
+        _add_faded_area(e, line_dsc)
+
+    elif line_dsc.base.part == lv.PART.MAIN:
+        pass
+        # optional: customize grid lines here later
+
+def _add_faded_area(e, line_dsc):
+    lv = init()
+
+    obj = e.get_target_obj()
+
+    coords = lv.area_t()
+    obj.get_coords(coords)
+
+    p1 = line_dsc.p1
+    p2 = line_dsc.p2
+    color = line_dsc.color
+    layer = line_dsc.base.layer
+
+    x_left = int(min(p1.x, p2.x))
+    x_right = int(max(p1.x, p2.x)) - 1
+    y_top = int(min(p1.y, p2.y))
+    y_low = int(max(p1.y, p2.y))
+    y_bottom = int(coords.y2)
+
+    if x_right < x_left:
+        x_right = x_left
+
+    chart_top = int(coords.y1)
+    chart_h = int(coords.y2 - coords.y1)
+    if chart_h <= 0:
+        return
+
+    def y_to_opa(y):
+        # Stronger near top, weaker near bottom
+        rel = (y - chart_top) / chart_h
+        if rel < 0:
+            rel = 0
+        if rel > 1:
+            rel = 1
+
+        # map top->bottom : 0.60 -> 0.00 approximately
+        opa = int(153 * (1.0 - rel))   # 153 ~= 60%
+        if opa < 0:
+            opa = 0
+        if opa > 255:
+            opa = 255
+        return opa
+
+    opa_top = y_to_opa(y_top)
+    opa_low = y_to_opa(y_low)
+    opa_bottom = y_to_opa(y_bottom)
+
+    # -------------------------
+    # Triangle wedge
+    # -------------------------
+    tri_dsc = lv.draw_triangle_dsc_t()
+    tri_dsc.init()
+
+    tri_dsc.grad.dir = lv.GRAD_DIR.VER
+    tri_dsc.grad.stops_count = 2
+    tri_dsc.grad.stops = [
+        lv.grad_stop_t({
+            'color': color,
+            'opa': opa_top,
+            'frac': 0
+        }),
+        lv.grad_stop_t({
+            'color': color,
+            'opa': opa_low,
+            'frac': 0xFF
+        })
+    ]
+
+    pt0 = lv.point_precise_t()
+    pt0.x = int(p1.x)
+    pt0.y = int(p1.y)
+
+    pt1 = lv.point_precise_t()
+    pt1.x = int(p2.x)
+    pt1.y = int(p2.y)
+
+    pt2 = lv.point_precise_t()
+    if p1.y > p2.y:
+        pt2.x = int(p2.x)
+        pt2.y = int(p1.y)
+    else:
+        pt2.x = int(p1.x)
+        pt2.y = int(p2.y)
+
+    tri_dsc.p = [pt0, pt1, pt2]
+
+    lv.draw_triangle(layer, tri_dsc)
+
+    # -------------------------
+    # Rectangle below
+    # -------------------------
+    rect_dsc = lv.draw_rect_dsc_t()
+    rect_dsc.init()
+    rect_dsc.bg_color = color
+    rect_dsc.bg_opa = opa_low
+    rect_dsc.border_opa = lv.OPA.TRANSP
+    rect_dsc.radius = 0
+        
+    rect_dsc.bg_grad.dir = lv.GRAD_DIR.VER
+    rect_dsc.bg_grad.stops_count = 2
+    rect_dsc.bg_grad.stops = [
+        lv.grad_stop_t({
+            'color': color,
+            'opa': lv.OPA.COVER,
+            'frac': 0
+        }),
+        lv.grad_stop_t({
+            'color': color,
+            'opa': lv.OPA._10,
+            'frac': 0xFF
+        })
+    ]
+
+    rect_area = lv.area_t()
+    rect_area.x1 = x_left
+    rect_area.x2 = x_right
+    rect_area.y1 = y_low
+    rect_area.y2 = y_bottom
+
+    lv.draw_rect(layer, rect_dsc, rect_area)
+
+
+def create_co2_chart_screen():
+    lv = init()
+
     scr = lv.obj()
-
-    # Background color
+    scr.set_size(240, 240)
     scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+    scr.set_style_bg_opa(lv.OPA.COVER, 0)
+    scr.set_style_border_width(0, 0)
+    scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
 
-    # Simple slider and label in the middle
-    slider = lv.slider(scr)
-    slider.set_size(180, 50)
-    slider.center()
+    # Chart
+    chart = lv.chart(scr)
+    chart.set_size(240, 240)
+    #chart.center()
+    chart.align(lv.ALIGN.CENTER, 0, 0)
     
-    label = lv.label(scr)
-    label.set_text('HELLO WORLD!')
-    label.align(lv.ALIGN.CENTER, 0, -50)
+    chart.remove_flag(lv.obj.FLAG.CLICKABLE)
+    chart.remove_flag(lv.obj.FLAG.SCROLLABLE)
+    chart.remove_flag(lv.obj.FLAG.GESTURE_BUBBLE)
 
-    # Enable swipe on the full screen
+    # Make chart background slightly gray first so we can see it exists
+    chart.set_style_bg_color(lv.color_hex(0x000000), 0)
+    chart.set_style_bg_opa(lv.OPA.COVER, 0)
+    chart.set_style_border_width(1, 0)
+    chart.set_style_border_color(lv.color_hex(0x000000), 0)
+    chart.set_style_pad_all(0, 0)
+
+    # Line chart
+    chart.set_type(lv.chart.TYPE.LINE)
+    chart.set_update_mode(lv.chart.UPDATE_MODE.SHIFT)
+
+    # Grid lines
+    chart.set_div_line_count(5, 5)
+    chart.set_style_line_color(lv.color_hex(0x404040), lv.PART.MAIN)
+    chart.set_style_line_opa(lv.OPA._50, lv.PART.MAIN)
+    chart.set_style_line_width(1, lv.PART.MAIN)
+    chart.set_style_line_dash_width(4, lv.PART.MAIN)
+    chart.set_style_line_dash_gap(4, lv.PART.MAIN)
+    
+    # Y range
+    chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, 300, 3000)
+
+    ser = chart.add_series(lv.color_hex(0x00ff66), lv.chart.AXIS.PRIMARY_Y)
+
+    # Title just so we know screen loaded
+    label = lv.label(scr)
+    label.set_text("CO2 ppm")
+    label.set_style_text_color(lv.color_hex(0x00ff66), 0)
+    label.align(lv.ALIGN.TOP_MID, 0, 8)
+    
+    def update_co2_chart(timer):
+        
+        value = int(var.sensor_data.co2_scd41)
+        
+        if value < 1000:
+            color = lv.color_hex(0x55FF00)
+        elif value < 1500:
+            color = lv.color_hex(0x00D0FF)
+        else:
+            color = lv.color_hex(0x303BFF)
+
+        txt = str(value)
+        label.set_text(txt + " ppm")
+        label.set_style_text_color(color, 0)
+
+        test_data = []
+        for i in range(0,30):
+            test_data.append(random.randint(400,2700))
+
+        # Make LVGL series length follow your list length
+        chart.set_point_count(len(test_data))
+
+        # Fill the backing array directly
+        y_points = chart.get_series_y_array(ser)
+        for i, v in enumerate(test_data):
+            y_points[i] = v
+
+        chart.refresh()
+        
+    lv.timer_create(update_co2_chart, 2000, None)
+    
+    chart.add_event_cb(co2_chart_draw_event_cb, lv.EVENT.DRAW_TASK_ADDED, None)
+    chart.add_flag(lv.obj.FLAG.SEND_DRAW_TASK_EVENTS)
+
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
     var.screens.append(scr)
-    var.screen_names.append("Dummy")
-    
-    #lv.screen_load(scr)
-    
-    return scr
+    var.screen_names.append("CO2 chart")
 
+    return scr
 
 def create_sensor_table():
     lv = init()
