@@ -15,6 +15,7 @@ from services.backlight_task import backlight_task
 from services.sensor_task import sensor_task
 from services.io_expander_task import io_expander_task
 from services.imu_task import imu_task
+from services.rtc_task import rtc_task
 from services.adc_task import adc_task
 from services.networking_task import networking_task
 from services.history_task import history_task
@@ -135,6 +136,7 @@ async def main():
     asyncio.create_task(sensor_task(0.3))
     asyncio.create_task(io_expander_task(i2c_bus, 0.5))
     asyncio.create_task(imu_task(i2c_bus, 0.5))
+    asyncio.create_task(rtc_task(i2c_bus, 2))
     asyncio.create_task(adc_task(1))
     asyncio.create_task(networking_task(30, 60))
     asyncio.create_task(history_task(2))
@@ -142,10 +144,9 @@ async def main():
     # 3) start UI
     #top_layer = lv.layer_top()
     ui.create_sensor_table()
-    #ui.create_dummy_screen()
     ui.create_co2_screen()
     ui.create_co2_chart_screen()
-    #ui.create_dummy_screen()
+    ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
     #ui.create_status_bar(top_layer)
 
