@@ -36,8 +36,8 @@ class SensorData:
 
 class SystemData:
     def __init__(self):
-        self.time_ntp = "Not connected"
-        self.time_rtc = "2025-11-20 20:00:10"
+        self.time_ntp = [1999, 1, 2, 11, 6, 11, 3, 78]
+        self.time_rtc = [2001, 2, 3, 12, 9, 12, 4, 69]
         self.status_wifi = "Not Connected"
         self.status_ap = "Not Connected"
         self.status_sd = "Offline"
