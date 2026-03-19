@@ -17,6 +17,7 @@ from services.io_expander_task import io_expander_task
 from services.imu_task import imu_task
 from services.adc_task import adc_task
 from services.networking_task import networking_task
+from services.history_task import history_task
 
 from logger import Logger
 
@@ -70,7 +71,7 @@ display_bus = lcd_bus.I80Bus(
 )
 
 # Set a big enough buffer to have smooth experiance (in expense of RAM)
-_BUFFER_SIZE = const(57600)
+_BUFFER_SIZE = const(75000)
 fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
 fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
 
@@ -129,19 +130,22 @@ async def main():
     
     # 2) spawn threads
     asyncio.create_task(idle_task(5.0))
-    asyncio.create_task(led_task(0.05))
+    asyncio.create_task(led_task(0.03))
     asyncio.create_task(backlight_task(0.1))
     asyncio.create_task(sensor_task(0.3))
     asyncio.create_task(io_expander_task(i2c_bus, 0.5))
     asyncio.create_task(imu_task(i2c_bus, 0.5))
     asyncio.create_task(adc_task(1))
     asyncio.create_task(networking_task(30, 60))
+    asyncio.create_task(history_task(2))
 
     # 3) start UI
     #top_layer = lv.layer_top()
     ui.create_sensor_table()
-    ui.create_dummy_screen()
+    #ui.create_dummy_screen()
     ui.create_co2_screen()
+    ui.create_co2_chart_screen()
+    #ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
     #ui.create_status_bar(top_layer)
 
