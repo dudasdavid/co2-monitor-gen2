@@ -15,11 +15,11 @@ async def backlight_task(period = 1.0):
     pwm.freq(20000)
     pwm.duty_u16(10000)
     
-    lux_min=5.0       # below this treat as "dark"
-    lux_max=200.0     # above this -> max backlight
-    duty_min=10       # min duty on your 0..100 scale (to avoid pitch black)
+    lux_min=2.0       # below this treat as "dark"
+    lux_max=120.0     # above this -> max backlight
+    duty_min=8       # min duty on your 0..100 scale (to avoid pitch black)
     duty_max=1000     # max duty
-    gamma=2.0         # >1.0 compresses the low end (fixes "too bright at 10–15%")
+    gamma=0.6         # >1.0 compresses the low end (fixes "too bright at 10–15%")
     alpha=0.3          # smoothing factor (0..1), 0=no change, 1=no smoothing
     _level = 0.0       # internal smoothed brightness level [0..1]
     _duty = 0.0
