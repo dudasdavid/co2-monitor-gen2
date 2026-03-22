@@ -26,93 +26,97 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
+i2c_bus = None
+
 # TODO: All display init should be moved into this function
-def init_display():
+def init_display_i80():
+    # Default parameters
+    _WIDTH = const(240)
+    _HEIGHT = const(240)
+
+    _LCD_CS = const(2)
+    _LCD_WRB = const(3)
+    _LCD_D0 = const(10)
+    _LCD_D1 = const(11)
+    _LCD_D2 = const(12)
+    _LCD_D3 = const(13)
+    _LCD_D4 = const(14)
+    _LCD_D5 = const(15)
+    _LCD_D6 = const(16)
+    _LCD_D7 = const(17)
+    _LCD_RS = const(18)
+    _LCD_RST = const(21)
+    _LCD_BACKLIGHT = const(42)
+    _LCD_FREQ = const(40000000)
+
+    _SCL = const(9)
+    _SDA = const(8)
+    _I2C_FREQ = const(100000)
+    _TP_RST = const(0)
+
+    # Initialize LVGL
+    lv = init()
+
+    # Initialize the display bus
+    display_bus = lcd_bus.I80Bus(
+        dc = _LCD_RS,
+        wr = _LCD_WRB,
+        freq=_LCD_FREQ,
+        data0=_LCD_D0,
+        data1=_LCD_D1,
+        data2=_LCD_D2,
+        data3=_LCD_D3,
+        data4=_LCD_D4,
+        data5=_LCD_D5,
+        data6=_LCD_D6,
+        data7=_LCD_D7
+    )
+
+    # Set a big enough buffer to have smooth experiance (in expense of RAM)
+    _BUFFER_SIZE = const(75000)
+    fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
+    fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
+
+    # Initialize the GC9A01 display driver
+    display = gc9a01.GC9A01(
+        data_bus = display_bus,
+        frame_buffer1=fb1,
+        frame_buffer2=fb2,
+        display_width = _WIDTH,
+        display_height = _HEIGHT,
+        reset_pin = _LCD_RST,
+        reset_state = gc9a01.STATE_LOW,
+        power_on_state = gc9a01.STATE_HIGH,
+        backlight_pin=_LCD_BACKLIGHT,
+        offset_x=0,
+        offset_y=0,
+        color_space=lv.COLOR_FORMAT.RGB565,
+        rgb565_byte_swap=True
+    )
+
+    # Initialize display
+    display.set_power(True)
+    display.init()
+    display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
+
+    # Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
+    global i2c_bus
+    i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
+    touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)
+
+    indev = cst816s.CST816S(touch_dev, reset_pin=_TP_RST)
+
+    if not indev.is_calibrated:
+        display.set_backlight(1)
+        indev.calibrate()
+
+    var.indev = indev
+
+    # No idea what is exactly this
+    th = task_handler.TaskHandler()
+
+def init_display_spi():
     pass
-
-# Default parameters
-_WIDTH = const(240)
-_HEIGHT = const(240)
-
-_LCD_CS = const(2)
-_LCD_WRB = const(3)
-_LCD_D0 = const(10)
-_LCD_D1 = const(11)
-_LCD_D2 = const(12)
-_LCD_D3 = const(13)
-_LCD_D4 = const(14)
-_LCD_D5 = const(15)
-_LCD_D6 = const(16)
-_LCD_D7 = const(17)
-_LCD_RS = const(18)
-_LCD_RST = const(21)
-_LCD_BACKLIGHT = const(42)
-_LCD_FREQ = const(40000000)
-
-_SCL = const(9)
-_SDA = const(8)
-_I2C_FREQ = const(100000)
-_TP_RST = const(0)
-
-# Initialize LVGL
-lv = init()
-
-# Initialize the display bus
-display_bus = lcd_bus.I80Bus(
-    dc = _LCD_RS,
-    wr = _LCD_WRB,
-    freq=_LCD_FREQ,
-    data0=_LCD_D0,
-    data1=_LCD_D1,
-    data2=_LCD_D2,
-    data3=_LCD_D3,
-    data4=_LCD_D4,
-    data5=_LCD_D5,
-    data6=_LCD_D6,
-    data7=_LCD_D7
-)
-
-# Set a big enough buffer to have smooth experiance (in expense of RAM)
-_BUFFER_SIZE = const(75000)
-fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
-fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
-
-# Initialize the GC9A01 display driver
-display = gc9a01.GC9A01(
-    data_bus = display_bus,
-    frame_buffer1=fb1,
-    frame_buffer2=fb2,
-    display_width = _WIDTH,
-    display_height = _HEIGHT,
-    reset_pin = _LCD_RST,
-    reset_state = gc9a01.STATE_LOW,
-    power_on_state = gc9a01.STATE_HIGH,
-    backlight_pin=_LCD_BACKLIGHT,
-    offset_x=0,
-    offset_y=0,
-    color_space=lv.COLOR_FORMAT.RGB565,
-    rgb565_byte_swap=True
-)
-
-# Initialize display
-display.set_power(True)
-display.init()
-display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
-
-# Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
-i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
-touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)
-
-indev = cst816s.CST816S(touch_dev, reset_pin=_TP_RST)
-
-if not indev.is_calibrated:
-    display.set_backlight(1)
-    indev.calibrate()
-
-var.indev = indev
-
-# No idea what is exactly this
-th = task_handler.TaskHandler()
 
 import ui
 
@@ -122,13 +126,20 @@ async def main():
     
     # 0) start watchdog (optional)
     #wdt = machine.WDT(timeout=8000)
-
+    
+    # 1) initialize display
+    if var.hw_variant == "i80":
+        init_display_i80()
+    elif var.hw_variant == "spi":
+        init_display_spi()
+    # Else is not needed because valid hw variants are already checked in main.py
+    
+    lv = init()
+    global i2c_bus
+    
     log.info("LVGL version:", lv.version_major(), lv.version_minor(), lv.version_patch())
     gc.collect()
     log.info("Free RAM at startup:", int(gc.mem_free() / 1024), "kB")
-    
-    # 1) initialize display
-    init_display()
     
     # 2) spawn threads
     asyncio.create_task(idle_task(5.0))

@@ -1,6 +1,8 @@
 # shared_variables.py
 import uasyncio as asyncio
 
+hw_variant = None # Can be "i80" or "spi"
+
 class SimpleQueue:
     def __init__(self):
         self._items = []
