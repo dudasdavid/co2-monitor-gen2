@@ -14,6 +14,7 @@ from services.led_task import led_task
 from services.backlight_task import backlight_task
 from services.sensor_task import sensor_task
 from services.io_expander_task import io_expander_task
+from services.io_task import io_task
 from services.imu_task import imu_task
 from services.rtc_task import rtc_task
 from services.adc_task import adc_task
@@ -27,32 +28,46 @@ from logger import Logger
 import shared_variables as var
 
 i2c_bus = None
+# Default parameters
+_WIDTH = const(240)
+_HEIGHT = const(240)
+
+_LCD_CS = const(2)
+_LCD_WRB = const(3)
+_LCD_D0 = const(10)
+_LCD_D1 = const(11)
+_LCD_D2 = const(12)
+_LCD_D3 = const(13)
+_LCD_D4 = const(14)
+_LCD_D5 = const(15)
+_LCD_D6 = const(16)
+_LCD_D7 = const(17)
+_LCD_RS = const(18)
+_LCD_RST = const(21)
+_LCD_BACKLIGHT = const(42)
+_LCD_FREQ = const(40000000)
+
+_SPI_HOST = const(1)
+_SPI_SCK = const(3)
+_SPI_MOSI = const(10)
+_SPI_MISO = const(0)
+
+#_LCD_FREQ = const(80000000)
+_LCD_DC = const(18)
+#_LCD_CS = const(2)
+#_LCD_RST = const(21)
+#_LCD_BACKLIGHT = const(42)
+
+_BUFFER_SIZE = const(75000)
+
+_SCL = const(9)
+_SDA = const(8)
+_I2C_FREQ = const(100000)
+_TP_RST = const(0)
+
 
 # TODO: All display init should be moved into this function
 def init_display_i80():
-    # Default parameters
-    _WIDTH = const(240)
-    _HEIGHT = const(240)
-
-    _LCD_CS = const(2)
-    _LCD_WRB = const(3)
-    _LCD_D0 = const(10)
-    _LCD_D1 = const(11)
-    _LCD_D2 = const(12)
-    _LCD_D3 = const(13)
-    _LCD_D4 = const(14)
-    _LCD_D5 = const(15)
-    _LCD_D6 = const(16)
-    _LCD_D7 = const(17)
-    _LCD_RS = const(18)
-    _LCD_RST = const(21)
-    _LCD_BACKLIGHT = const(42)
-    _LCD_FREQ = const(40000000)
-
-    _SCL = const(9)
-    _SDA = const(8)
-    _I2C_FREQ = const(100000)
-    _TP_RST = const(0)
 
     # Initialize LVGL
     lv = init()
@@ -73,7 +88,6 @@ def init_display_i80():
     )
 
     # Set a big enough buffer to have smooth experiance (in expense of RAM)
-    _BUFFER_SIZE = const(75000)
     fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
     fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
 
@@ -116,7 +130,66 @@ def init_display_i80():
     th = task_handler.TaskHandler()
 
 def init_display_spi():
-    pass
+
+    # Initialize LVGL
+    lv = init()
+
+    # Initialize the display bus
+    spi_bus = SPI.Bus(
+        host = _SPI_HOST,
+        mosi = _SPI_MOSI,
+        miso = _SPI_MISO,
+        sck = _SPI_SCK
+    )
+
+    # Initialize the display bus
+    display_bus = lcd_bus.SPIBus(
+        spi_bus = spi_bus,
+        dc = _LCD_DC,
+        cs = _LCD_CS,
+        freq=_LCD_FREQ 
+    )
+
+    # Set a big enough buffer to have smooth experiance (in expense of RAM)
+    fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
+    fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
+
+    # Initialize the GC9A01 display driver
+    display = gc9a01.GC9A01(
+        data_bus = display_bus,
+        frame_buffer1=fb1,
+        frame_buffer2=fb2,
+        display_width = _WIDTH,
+        display_height = _HEIGHT,
+        reset_pin = _LCD_RST,
+        reset_state = gc9a01.STATE_LOW,
+        power_on_state = gc9a01.STATE_HIGH,
+        backlight_pin=_LCD_BACKLIGHT,
+        offset_x=0,
+        offset_y=0,
+        color_space=lv.COLOR_FORMAT.RGB565,
+        rgb565_byte_swap=True
+    )
+
+    # Initialize display
+    display.set_power(True)
+    display.init()
+    display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
+
+    # Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
+    i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
+    touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)
+
+    indev = cst816s.CST816S(touch_dev, reset_pin=_TP_RST)
+
+    if not indev.is_calibrated:
+        display.set_backlight(1)
+        indev.calibrate()
+
+    var.indev = indev
+
+    # No idea what is exactly this
+    th = task_handler.TaskHandler()
 
 import ui
 
