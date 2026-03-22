@@ -146,13 +146,17 @@ async def main():
     asyncio.create_task(led_task(0.03))
     asyncio.create_task(backlight_task(0.1))
     asyncio.create_task(sensor_task(0.3))
-    asyncio.create_task(io_expander_task(i2c_bus, 0.5))
-    asyncio.create_task(imu_task(i2c_bus, 0.5))
-    asyncio.create_task(rtc_task(i2c_bus, 2))
     asyncio.create_task(adc_task(1))
     asyncio.create_task(networking_task(30, 60))
     asyncio.create_task(history_task(2))
     asyncio.create_task(audio_task(10))
+    
+    if var.hw_variant == "i80":
+        asyncio.create_task(io_expander_task(i2c_bus, 0.5))
+        asyncio.create_task(imu_task(i2c_bus, 0.5))
+        asyncio.create_task(rtc_task(i2c_bus, 2))
+    elif var.hw_variant == "spi":
+        asyncio.create_task(io_task(0.5))
 
     # 3) start UI
     #top_layer = lv.layer_top()
