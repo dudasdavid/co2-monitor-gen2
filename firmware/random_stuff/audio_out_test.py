@@ -62,7 +62,7 @@ def apply_volume(buf, volume):
 
         struct.pack_into('<h', buf, i, s)
 
-def play_wav(path, i2s_id=0, ibuf=20000):
+def play_wav(path, i2s_id=0, ibuf=40000):
     with open(path, "rb") as f:
         ch, rate, bits, data_size = _wav_info_and_seek_data(f)
         print("WAV:", ch, "ch,", rate, "Hz,", bits, "bit,", data_size, "bytes")
@@ -101,7 +101,7 @@ def play_wav(path, i2s_id=0, ibuf=20000):
             remaining -= n
 
         # 1) push a little silence to flush the pipeline
-        tail = bytearray(2048)          # 0s = silence (16-bit PCM)
+        tail = bytearray(1024)          # 0s = silence (16-bit PCM)
         audio.write(tail)
 
         # 2) give the DAC time to actually play what's buffered
@@ -110,4 +110,4 @@ def play_wav(path, i2s_id=0, ibuf=20000):
         audio.deinit()
 
 # Example:
-play_wav("/voice.wav", i2s_id=0)
+play_wav("/sounds/oxp.wav", i2s_id=0)
