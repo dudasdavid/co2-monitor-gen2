@@ -17,12 +17,12 @@ async def backlight_task(period = 1.0):
     
     lux_min=2.0       # below this treat as "dark"
     lux_max=120.0     # above this -> max backlight
-    duty_min=8       # min duty on your 0..100 scale (to avoid pitch black)
+    duty_min=8        # min duty on your 0..100 scale (to avoid pitch black)
     duty_max=1000     # max duty
     gamma=0.6         # >1.0 compresses the low end (fixes "too bright at 10–15%")
-    alpha=0.3          # smoothing factor (0..1), 0=no change, 1=no smoothing
-    _level = 0.0       # internal smoothed brightness level [0..1]
-    _duty = 0.0
+    alpha=0.3         # smoothing factor (0..1), 0=no change, 1=no smoothing
+    _level = 1.0      # internal smoothed brightness level [0..1]
+    _duty = 1000.0    # default level is 1 (max) and duty is 1000 (max) to show welcome screen with high brigthness
     max_step = 30 
 
     def _lux_to_level(lux):

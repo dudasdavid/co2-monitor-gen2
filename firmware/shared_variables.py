@@ -31,7 +31,7 @@ class SensorData:
         self.temp_qmi8658c = 16.9
         self.humidity_scd41 = 26.9
         self.co2_scd41 = 666
-        self.lux_veml7700 = 169.69
+        self.lux_veml7700 = 269.69
         self.acc_qmi8658c = (1,2,3)
         self.gyro_qmi8658c = (4,5,6)
         self.timestamp_qmi8658c = 69
