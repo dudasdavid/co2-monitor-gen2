@@ -47,7 +47,7 @@ class PCF85063:
             month   = bcdtodec(self._timebuf[5] & 0x1f)
             year    = bcdtodec(self._timebuf[6]) + 1970
 
-            return (year, month, day, hour, minutes, seconds, weekday, 0) # Conforms to the ESP8266 RTC (v1.13)
+            return (year, month, day, hour, minutes, seconds, weekday, 0)
 
         # Set the clock
         self._timebuf[0] = dectobcd(datetime[5]) # Seconds
