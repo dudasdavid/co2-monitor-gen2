@@ -1,9 +1,11 @@
 import uasyncio as asyncio
 import time
 import i2c
+from machine import Pin, RTC
 from logger import Logger
 from drivers import veml7700 as veml7700_driver
 from drivers import scd4x as scd4x_driver
+from drivers import ds3231 as ds3231_driver
 
 import math
 
@@ -32,6 +34,39 @@ def compensate_humidity(rh_raw: float, t_raw: float, t_cal: float) -> float:
     # clamp to physical limits
     return max(0.0, min(100.0, rh_cal))
 
+def is_time_diff_over_threshold(ntp_time, rtc_time, threshold_seconds=60):
+    """
+    ntp_time and rtc_time are tuples like:
+    (year, month, day, hour, minute, second, weekday, subsecond)
+
+    Returns True if the absolute difference is > threshold_seconds (default 60s),
+    otherwise False. If either is None or invalid, logs a warning and returns False.
+    """
+    if ntp_time is None or rtc_time is None:
+        log.warning("NTP or RTC time is None, cannot compare.")
+        return False
+
+    try:
+        # Unpack only the fields we actually need
+        ny, nmo, nd, nh, nmin, ns, _, _ = ntp_time
+        ry, rmo, rd, rh, rmin, rs, _, _ = rtc_time
+
+        # Build time tuples compatible with time.mktime:
+        # (year, month, mday, hour, minute, second, weekday, yearday)
+        # weekday & yearday can be 0, they are usually ignored by mktime.
+        ntp_struct = (ny, nmo, nd, nh, nmin, ns, 0, 0)
+        rtc_struct = (ry, rmo, rd, rh, rmin, rs, 0, 0)
+
+        ntp_seconds = time.mktime(ntp_struct)
+        rtc_seconds = time.mktime(rtc_struct)
+
+        diff = abs(ntp_seconds - rtc_seconds)
+        return diff > threshold_seconds
+
+    except Exception as e:
+        log.warning("Failed to compare times:", ntp_time, rtc_time, "| Error:", e)
+        return False
+
 async def sensor_task(period = 1.0):
     #Init
     
@@ -55,6 +90,32 @@ async def sensor_task(period = 1.0):
     except:
         log.error("SCD41 cannot be initialized!")
     
+    if var.hw_variant == "spi":
+        # Initialize the DS3231 RTC
+        try:
+            ds3231 = ds3231_driver.DS3231(i2c1_bus)
+            rtc_time = ds3231.datetime()
+            var.system_data.time_rtc = rtc_time
+            log.info("DS3231 RTC datetime at init:", rtc_time)
+        except:
+            log.error("DS3231 cannot be initialized!")
+
+        if not var.ntp_time_synchronized:
+            rtc = RTC()
+            
+            # MicroPython RTC datetime format:
+            # (year, month, day, weekday, hour, minute, second, subseconds)
+            rtc.datetime((
+                rtc_time[0],  # year
+                rtc_time[1],  # month
+                rtc_time[2],  # day
+                rtc_time[6],  # weekday convert if needed
+                rtc_time[3],  # hour
+                rtc_time[4],  # minute
+                rtc_time[5],  # second
+                0
+            ))
+
 
     i = 0
 
@@ -132,7 +193,28 @@ async def sensor_task(period = 1.0):
                 var.system_data.feedback_led = "red"
         except:
             log.error("SCD41 communication error")
-        
+
+
+        if var.hw_variant == "spi" and i % 10 == 0:
+            rtc_time = ds3231.datetime()
+            rtc_temp = ds3231.temperature()
+            log.debug("DS3231 Time:", rtc_time)
+            log.debug("DS3231 Temperature:", rtc_temp)
+            
+            var.system_data.time_rtc = rtc_time
+            var.sensor_data.temp_ds3231 = rtc_temp
+            
+            log.debug("NTP time synchronized:", var.ntp_time_synchronized)
+            if var.ntp_time_synchronized:
+                log.debug("RTC time:", var.system_data.time_rtc)
+                log.debug("NTP time:", time.localtime())
+                if is_time_diff_over_threshold(time.localtime(), var.system_data.time_rtc, 60):
+                    log.warning("RTC time needs to be updated from NTP time!")
+                    log.warning("RTC time:", var.system_data.time_rtc)
+                    log.warning("NTP time:", time.localtime())
+                    ds3231.datetime(time.localtime())
+
+
         var.system_data.sensor_task_timestamp = time.time()
         
         await asyncio.sleep(period)
