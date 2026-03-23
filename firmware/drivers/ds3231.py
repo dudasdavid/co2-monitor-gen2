@@ -46,6 +46,7 @@ class DS3231:
         self._buf = bytearray(1) # Pre-allocate a single bytearray for re-use
         self._al1_buf = bytearray(4)
         self._al2buf = bytearray(3)
+        self._tempbuf = bytearray(2)
 
     def datetime(self, datetime=None):
         """Get or set datetime
@@ -94,6 +95,15 @@ class DS3231:
         self.i2c.writeto_mem(self.addr, DATETIME_REG, self._timebuf)
         self._OSF_reset()
         return True
+
+    def temperature(self):
+        def twos_complement(input_value: int, num_bits: int) -> int:
+            mask = 2 ** (num_bits - 1)
+            return -(input_value & mask) + (input_value & ~mask)
+
+        self.i2c.readfrom_mem_into(self.addr, 0x11, self._tempbuf)
+        i = self._tempbuf[0] << 8 | self._tempbuf[1]
+        return twos_complement(i >> 6, 10) * 0.25
 
     def square_wave(self, freq=None):
         """Outputs Square Wave Signal
