@@ -666,7 +666,10 @@ def create_sensor_table():
 
     def table_update_cb(task):
         table.set_cell_value(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))
-        table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
+        if var.hw_variant == "i80":
+            table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
+        elif var.hw_variant == "spi":
+            table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_ds3231))
         table.set_cell_value(2, 2, "{:.1f}".format(var.sensor_data.humidity_scd41))
         table.set_cell_value(3, 2, "{}".format(int(var.sensor_data.co2_scd41)))
         table.set_cell_value(4, 2, "{:.2f}".format(var.sensor_data.lux_veml7700))

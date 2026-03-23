@@ -29,6 +29,7 @@ class SensorData:
     def __init__(self):
         self.temp_scd41 = 6.9
         self.temp_qmi8658c = 16.9
+        self.temp_ds3231 = 17.9
         self.humidity_scd41 = 26.9
         self.co2_scd41 = 666
         self.lux_veml7700 = 269.69
