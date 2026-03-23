@@ -66,6 +66,31 @@ def swipe_event_cb(e):
     elif d == lv.DIR.RIGHT:
         prev_screen()
 
+def create_welcome_screen():
+    
+    lv = init()
+    
+    # Create a new screen
+    scr = lv.obj()
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+    scr.set_style_bg_opa(lv.OPA.COVER, 0)
+    scr.set_style_border_width(0, 0)
+
+    # Welcome label
+    label = lv.label(scr)
+    label.set_text("Welcome")
+    label.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    label.set_style_text_font(lv.font_montserrat_28, 0)
+    label.center()
+    
+    #var.screens.append(scr)
+    #var.screen_names.append("Welcome")
+
+    # Load the screen
+    lv.screen_load(scr)
+
+    return scr
+
 def create_gradient_screen():
     
     lv = init()

@@ -214,6 +214,8 @@ async def main():
     gc.collect()
     log.info("Free RAM at startup:", int(gc.mem_free() / 1024), "kB")
     
+    ui.create_welcome_screen()
+    
     # 2) spawn threads
     asyncio.create_task(idle_task(5.0))
     asyncio.create_task(led_task(0.03))
@@ -232,6 +234,7 @@ async def main():
         asyncio.create_task(io_task(0.5))
 
     # 3) start UI
+    await asyncio.sleep(5)
     #top_layer = lv.layer_top()
     ui.create_sensor_table()
     ui.create_co2_screen()
