@@ -483,7 +483,6 @@ def _add_faded_area(e, line_dsc):
 
     lv.draw_rect(layer, rect_dsc, rect_area)
 
-
 def create_co2_chart_screen():
     lv = init()
 
@@ -524,7 +523,7 @@ def create_co2_chart_screen():
     chart.set_style_line_dash_gap(4, lv.PART.MAIN)
     
     # Y range
-    chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, 300, 3000)
+    chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, 300, 1000)
 
     ser = chart.add_series(lv.color_hex(0x00ff66), lv.chart.AXIS.PRIMARY_Y)
 
@@ -549,16 +548,39 @@ def create_co2_chart_screen():
         label.set_text(txt + " ppm")
         label.set_style_text_color(color, 0)
 
-        test_data = []
-        for i in range(0,30):
-            test_data.append(random.randint(400,2700))
+        display_data = []
+        if len(var.scd41_co2_history) < var.scd41_co2_max_display_history:
+            display_data = (var.scd41_co2_max_display_history - len(var.scd41_co2_history)) * [var.scd41_co2_history[0]]
+            display_data += var.scd41_co2_history
+        elif len(var.scd41_co2_history) == var.scd41_co2_max_display_history:
+            display_data = var.scd41_co2_history
+        else:
+            display_data = var.scd41_co2_history[-var.scd41_co2_max_display_history:]
 
+        #print("source history len", len(var.scd41_co2_history))
+        #print("source history last", var.scd41_co2_history[-1])
+        #print("showed history len:", len(display_data))
+        #print("showed history last:", display_data[-1])
         # Make LVGL series length follow your list length
-        chart.set_point_count(len(test_data))
+        chart.set_point_count(len(display_data))
+
+        # Optional: dynamic Y range based on actual data
+        y_min = min(display_data) - 50
+        y_max = max(display_data) + 50
+
+        # Avoid zero-height range
+        if y_min == y_max:
+            y_min -= 50
+            y_max += 50
+            if y_min < 0:
+                y_min = 0
+                                
+        # Or comment this out to stick to fixed 0…3000 range above
+        chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, y_min, y_max)
 
         # Fill the backing array directly
         y_points = chart.get_series_y_array(ser)
-        for i, v in enumerate(test_data):
+        for i, v in enumerate(display_data):
             y_points[i] = v
 
         chart.refresh()
