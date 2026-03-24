@@ -33,8 +33,8 @@ class SensorData:
         self.humidity_scd41 = 26.9
         self.co2_scd41 = 666
         self.lux_veml7700 = 269.69
-        self.acc_qmi8658c = (1,2,3)
-        self.gyro_qmi8658c = (4,5,6)
+        self.acc_qmi8658c = (0,0,0)
+        self.gyro_qmi8658c = (0,0,0)
         self.timestamp_qmi8658c = 69
 
 class SystemData:
@@ -121,6 +121,7 @@ ap_enabled = False
 wifi_connected = False
 wifi_connecting = False
 ntp_time_synchronized = False
+rtc_time_synchronized = False
 wifi_ready_evt = asyncio.Event()
 ssid_save_successful = False
 wifi_ip = None
@@ -144,6 +145,6 @@ scd41_co2_peak_ppm = 400
 scd41_co2_threshold = 1800
 scd41_co2_detected = 0
 scd41_co2_history = [400] # Must contain 1 placeholder element
-scd41_co2_max_history_samples = 60
+scd41_co2_max_display_history = 30
 
 history_loaded = False
