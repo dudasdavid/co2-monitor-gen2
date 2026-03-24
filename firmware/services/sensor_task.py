@@ -115,7 +115,7 @@ async def sensor_task(period = 1.0):
                 rtc_time[5],  # second
                 0
             ))
-
+            var.rtc_time_synchronized = True
 
     i = 0
 
@@ -170,7 +170,7 @@ async def sensor_task(period = 1.0):
             var.sensor_data.co2_scd41 = co2 if co2 is not None else 0
             
             if temp is not None:
-                temp_cal = 0.98 * temp - 6.8
+                temp_cal = 1 * temp - 0
                 var.sensor_data.temp_scd41 = temp_cal
             else:
                 temp_cal = 0.69
@@ -182,15 +182,6 @@ async def sensor_task(period = 1.0):
             else:
                 var.sensor_data.humidity_scd41 = 0
             
-            # TODO: Should be moved to LED task
-            if co2 == None:
-                var.system_data.feedback_led = "off"
-            elif co2 < 1000:
-                var.system_data.feedback_led = "green"
-            elif co2 < 1500:
-                var.system_data.feedback_led = "yellow"
-            else:
-                var.system_data.feedback_led = "red"
         except:
             log.error("SCD41 communication error")
 

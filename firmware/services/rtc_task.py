@@ -69,6 +69,7 @@ async def rtc_task(i2c_bus, period = 1.0):
             rtc_time[5],  # second
             0
         ))
+        var.rtc_time_synchronized = True
     
     #Test to intentionally cause a wrong RTC time
     #pcf85063.datetime((2022, 10, 9, 11, 11, 11, 0))
