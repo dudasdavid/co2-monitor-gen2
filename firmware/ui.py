@@ -42,17 +42,17 @@ def show_screen(idx, lv_animation):
     )
 
 def next_screen(audio_feedback=True):
-    if audio_feedback:
-        var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
     lv = init()
     show_screen(var.current_idx + 1, lv.SCREEN_LOAD_ANIM.OVER_LEFT)
-
-def prev_screen(audio_feedback=True):
     if audio_feedback:
         var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
+
+def prev_screen(audio_feedback=True):
     lv = init()
     show_screen(var.current_idx - 1, lv.SCREEN_LOAD_ANIM.OVER_RIGHT)
-
+    if audio_feedback:
+        var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
+        
 def swipe_event_cb(e):
     lv = init()
 
