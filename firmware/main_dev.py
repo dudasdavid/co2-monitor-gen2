@@ -49,7 +49,7 @@ _LCD_RST = const(21)
 _LCD_BACKLIGHT = const(42)
 _LCD_FREQ = const(4000000)
 # SPI display pins
-_LCD_SPI_FREQ = const(40000000)
+_LCD_SPI_FREQ = const(20000000)
 _LCD_DC = const(18)
 #_LCD_CS = const(2)
 #_LCD_RST = const(21)

@@ -103,7 +103,7 @@ async def audio_task():
             if var.hw_variant == "i80":
                 await asyncio.sleep_ms(60)
             elif var.hw_variant == "spi":
-                await asyncio.sleep_ms(20)
+                await asyncio.sleep_ms(60)
             await play_pcm(click_ch, click_rate, click_pcm, tail=35)
         elif event_type == var.EVENT_AUDIO_LONG:
             pass
