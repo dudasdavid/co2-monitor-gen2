@@ -33,7 +33,7 @@ i2c_bus = None
 # Default parameters
 _WIDTH = const(240)
 _HEIGHT = const(240)
-
+# i80 display pins
 _LCD_CS = const(2)
 _LCD_WRB = const(3)
 _LCD_D0 = const(10)
@@ -47,30 +47,27 @@ _LCD_D7 = const(17)
 _LCD_RS = const(18)
 _LCD_RST = const(21)
 _LCD_BACKLIGHT = const(42)
-_LCD_FREQ = const(40000000)
-
+_LCD_FREQ = const(4000000)
+# SPI display pins
+_LCD_SPI_FREQ = const(40000000)
+_LCD_DC = const(18)
+#_LCD_CS = const(2)
+#_LCD_RST = const(21)
+#_LCD_BACKLIGHT = const(42)
 _SPI_HOST = const(1)
 _SPI_SCK = const(3)
 _SPI_MOSI = const(10)
 _SPI_MISO = const(0)
 
-#_LCD_FREQ = const(80000000)
-_LCD_DC = const(18)
-#_LCD_CS = const(2)
-#_LCD_RST = const(21)
-#_LCD_BACKLIGHT = const(42)
-
 _BUFFER_SIZE = const(75000)
 
+# touch device pins
 _SCL = const(9)
 _SDA = const(8)
 _I2C_FREQ = const(100000)
 _TP_RST = const(0)
 
-
-# TODO: All display init should be moved into this function
 def init_display_i80():
-
     # Initialize LVGL
     lv = init()
 
@@ -132,7 +129,6 @@ def init_display_i80():
     th = task_handler.TaskHandler()
 
 def init_display_spi():
-
     # Initialize LVGL
     lv = init()
 
@@ -149,7 +145,7 @@ def init_display_spi():
         spi_bus = spi_bus,
         dc = _LCD_DC,
         cs = _LCD_CS,
-        freq=_LCD_FREQ 
+        freq=_LCD_SPI_FREQ 
     )
 
     # Set a big enough buffer to have smooth experiance (in expense of RAM)
