@@ -22,6 +22,7 @@ from services.networking_task import networking_task
 from services.history_task import history_task
 from services.storage_task import storage_task
 from services.audio_task import audio_task
+from services.event_handler_task import event_handler_task
 
 from logger import Logger
 
@@ -226,7 +227,8 @@ async def main():
     asyncio.create_task(networking_task(30, 60))
     asyncio.create_task(history_task(2))
     asyncio.create_task(storage_task(5))
-    asyncio.create_task(audio_task(10))
+    asyncio.create_task(audio_task())
+    asyncio.create_task(event_handler_task())
     
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
