@@ -12,6 +12,10 @@ class SimpleQueue:
         async with self._lock:
             self._items.append(item)
 
+    def put_nowait(self, item):
+        # Safe if everything runs on the same thread/core
+        self._items.append(item)
+
     async def get(self):
         while True:
             async with self._lock:
@@ -20,7 +24,8 @@ class SimpleQueue:
             await asyncio.sleep_ms(10)
 
 # Create a global queue instance
-events = SimpleQueue()
+button_events = SimpleQueue()
+audio_events = SimpleQueue()
 
 async def post_event(ev):
     await events.put(ev)
@@ -65,7 +70,7 @@ class SystemData:
         self.bat_percentage = 69
         self.charging = False
         self.feedback_led = "green"
-        self.buttons = [0,1,2]
+        self.buttons = [6,6,6]
         self.usb_connected = 3
         self.adc_task_timestamp = 0
         self.backlight_task_timestamp = 0
@@ -148,3 +153,6 @@ scd41_co2_history = [400] # Must contain 1 placeholder element
 scd41_co2_max_display_history = 30
 
 history_loaded = False
+
+EVENT_AUDIO_SHORT = 1
+EVENT_AUDIO_LONG = 2
