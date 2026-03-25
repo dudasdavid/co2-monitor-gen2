@@ -9,7 +9,7 @@ import shared_variables as var
 
 log = Logger("stor", debug_enabled=False)
 
-CSV_HEADER = "timestamp,temperature,humidity,co2,eco2,tvoc,aqi,pressure,lux\n"
+CSV_HEADER = "timestamp,temperature,temperature2,humidity,co2,lux\n"
 
 # ---- Helpers ----
 
