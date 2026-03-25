@@ -8,6 +8,12 @@ import struct
 # ---- Global variables ----
 import shared_variables as var
 
+I2S_SCK_PIN = const(5) # BCLK
+I2S_WS_PIN  = const(4) # LRC
+I2S_SD_PIN  = const(7) # Master DOUT / Slave DIN
+
+CHUNK = 4096
+
 def vol_db(db):
     # db: -60 … 0
     return 10 ** (db / 20)
@@ -63,71 +69,61 @@ def _wav_info_and_seek_data(f):
         else:
             f.seek(csz, 1)
 
+def load_wav_pcm(path):
+    with open(path, "rb") as f:
+        ch, rate, bits, data_size = _wav_info_and_seek_data(f)
+        if bits != 16:
+            raise ValueError("Only 16-bit PCM")
+        data = f.read(data_size)
+        return ch, rate, data
+
+async def play_pcm(ch, rate, pcm, tail = 1):
+    # i2s cannot be globally initialized and kept initialized because it crashes lvgl ui
+    audio = I2S(
+        0,
+        sck=Pin(I2S_SCK_PIN),
+        ws=Pin(I2S_WS_PIN),
+        sd=Pin(I2S_SD_PIN),
+        mode=I2S.TX,
+        bits=16,
+        format=I2S.MONO if ch == 1 else I2S.STEREO,
+        rate=rate,
+        ibuf=40000
+    )
+    
+    try:
+        mv = memoryview(pcm)
+        for i in range(0, len(pcm), CHUNK):
+            audio.write(mv[i:i+CHUNK])
+            #await asyncio.sleep_ms(0)
+        # push a little silence to flush the pipeline
+        tail = bytearray(1024*tail) # 0s = silence (16-bit PCM)
+        audio.write(tail)
+    finally:
+        audio.deinit()
+
 async def audio_task():
     #Init
     log = Logger("wav", debug_enabled=True)
-    
-    # --- pick GPIOs that are free on your ESP32-S3 board ---
-    SCK_PIN = 5   # BCLK
-    WS_PIN  = 4   # LRC
-    SD_PIN  = 7   # DIN
+    # Load and play boot sound ASAP
+    boot_ch, boot_rate, boot_pcm = load_wav_pcm("/sounds/oxp.wav")
+    await play_pcm(boot_ch, boot_rate, boot_pcm, tail = 20)
 
-    async def play_wav(path, i2s_id=0, ibuf=40000):
-        with open(path, "rb") as f:
-            ch, rate, bits, data_size = _wav_info_and_seek_data(f)
-            log.info("WAV:", ch, "ch,", rate, "Hz,", bits, "bit,", data_size, "bytes")
-            bytes_per_sec = rate * ch * (bits // 8)
-            log.info("Expected length:", data_size / bytes_per_sec, "sec")
-
-            if bits != 16:
-                raise ValueError("Use 16-bit PCM WAV for this player")
-            if ch not in (1, 2):
-                raise ValueError("Only mono/stereo supported")
-
-            audio = I2S(
-                i2s_id,
-                sck=Pin(SCK_PIN),
-                ws=Pin(WS_PIN),
-                sd=Pin(SD_PIN),
-                mode=I2S.TX,
-                bits=16,
-                format=I2S.MONO if ch == 1 else I2S.STEREO,
-                rate=rate,
-                ibuf=ibuf
-            )
-
-
-            buf = bytearray(4096)
-            mv = memoryview(buf)
-
-            remaining = data_size
-            while remaining > 0:
-                n = f.readinto(mv)
-                if n <= 0:
-                    break
-                
-                #apply_volume(mv[:n], VOLUME)
-                audio.write(mv[:n])   # blocking write
-                remaining -= n
-
-            # 1) push a little silence to flush the pipeline
-            tail = bytearray(1024*22)          # 0s = silence (16-bit PCM)
-            audio.write(tail)
-
-            # 2) give the DAC time to actually play what's buffered
-            #await asyncio.sleep(0.1)               # 40–150ms works well in practice
-
-            audio.deinit()
-
-    await play_wav("/sounds/oxp.wav", i2s_id=0)
+    # Pre-load other sound samples to RAM
+    click_ch, click_rate, click_pcm = load_wav_pcm("/sounds/click.wav")
+    long_ch, long_rate, long_pcm = load_wav_pcm("/sounds/long_click.wav")
 
     #Run
     while True:
         event_type = await var.audio_events.get()
         log.debug("Audio event arrived:", event_type)
         if event_type == var.EVENT_AUDIO_SHORT:
-            await play_wav("/sounds/click.wav", i2s_id=0)
+            # A small sleep is needed for screen change otherwise lvgl will glitch due to i2s dma
+            await asyncio.sleep_ms(80)
+            await play_pcm(click_ch, click_rate, click_pcm, tail=35)
         elif event_type == var.EVENT_AUDIO_LONG:
-            await play_wav("/sounds/long_click.wav", i2s_id=0)
+            pass
+            await play_pcm(long_ch, long_rate, long_pcm)
         else:
-            await play_wav("/sounds/click.wav", i2s_id=0)
+            pass
+            await play_pcm(click_ch, click_rate, click_pcm)
