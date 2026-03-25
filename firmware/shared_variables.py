@@ -167,3 +167,4 @@ history_loaded = False
 
 EVENT_AUDIO_SHORT = 1
 EVENT_AUDIO_LONG = 2
+EVENT_AUDIO_OFF = 3

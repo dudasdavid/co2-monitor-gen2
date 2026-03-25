@@ -28,7 +28,10 @@ async def event_handler_task():
 
         elif event_type == EVENT_LONG:
             log.debug("LONG press detected on:", btn_name)
-            await var.audio_events.put(var.EVENT_AUDIO_LONG)
+            if btn_name == "power":
+                await var.audio_events.put(var.EVENT_AUDIO_OFF)
+            else:
+                await var.audio_events.put(var.EVENT_AUDIO_LONG)
 
         else:
             log.debug("Unknown event:", btn_name, event_type)

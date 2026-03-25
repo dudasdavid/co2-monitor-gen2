@@ -14,26 +14,6 @@ I2S_SD_PIN  = const(7) # Master DOUT / Slave DIN
 
 CHUNK = 4096
 
-def vol_db(db):
-    # db: -60 … 0
-    return 10 ** (db / 20)
-
-VOLUME = vol_db(-12)   # sounds “half as loud”
-
-def apply_volume(buf, volume):
-    # volume: 0.0 … 1.0
-    for i in range(0, len(buf), 2):
-        s = struct.unpack_from('<h', buf, i)[0]
-        s = int(s * volume)
-
-        # clamp
-        if s > 32767:
-            s = 32767
-        elif s < -32768:
-            s = -32768
-
-        struct.pack_into('<h', buf, i, s)
-
 def _wav_info_and_seek_data(f):
     # Minimal WAV parser (PCM only)
     if f.read(4) != b'RIFF':
@@ -112,18 +92,25 @@ async def audio_task():
     # Pre-load other sound samples to RAM
     click_ch, click_rate, click_pcm = load_wav_pcm("/sounds/click.wav")
     long_ch, long_rate, long_pcm = load_wav_pcm("/sounds/long_click.wav")
+    off_ch, off_rate, off_pcm = load_wav_pcm("/sounds/winxpshutdown.wav")
 
     #Run
     while True:
         event_type = await var.audio_events.get()
         log.debug("Audio event arrived:", event_type)
         if event_type == var.EVENT_AUDIO_SHORT:
-            # A small sleep is needed for screen change otherwise lvgl will glitch due to i2s dma
-            await asyncio.sleep_ms(80)
+            # A small sleep is needed for screen change otherwise i80 display driver will glitch due to i2s dma
+            if var.hw_variant == "i80":
+                await asyncio.sleep_ms(60)
+            elif var.hw_variant == "spi":
+                await asyncio.sleep_ms(20)
             await play_pcm(click_ch, click_rate, click_pcm, tail=35)
         elif event_type == var.EVENT_AUDIO_LONG:
             pass
-            await play_pcm(long_ch, long_rate, long_pcm)
+            await play_pcm(long_ch, long_rate, long_pcm, tail = 10)
+        elif event_type == var.EVENT_AUDIO_OFF:
+            pass
+            await play_pcm(off_ch, off_rate, off_pcm)
         else:
             pass
-            await play_pcm(click_ch, click_rate, click_pcm)
+            await play_pcm(click_ch, click_rate, click_pcm, tail=35)
