@@ -63,7 +63,7 @@ def _wav_info_and_seek_data(f):
         else:
             f.seek(csz, 1)
 
-async def audio_task(period = 1.0):
+async def audio_task():
     #Init
     log = Logger("wav", debug_enabled=True)
     
@@ -111,11 +111,11 @@ async def audio_task(period = 1.0):
                 remaining -= n
 
             # 1) push a little silence to flush the pipeline
-            tail = bytearray(1024)          # 0s = silence (16-bit PCM)
+            tail = bytearray(1024*22)          # 0s = silence (16-bit PCM)
             audio.write(tail)
 
             # 2) give the DAC time to actually play what's buffered
-            await asyncio.sleep(0.2)               # 40–150ms works well in practice
+            #await asyncio.sleep(0.1)               # 40–150ms works well in practice
 
             audio.deinit()
 
@@ -123,6 +123,11 @@ async def audio_task(period = 1.0):
 
     #Run
     while True:
-        log.debug("Task is running")
-                
-        await asyncio.sleep(period)
+        event_type = await var.audio_events.get()
+        log.debug("Audio event arrived:", event_type)
+        if event_type == var.EVENT_AUDIO_SHORT:
+            await play_wav("/sounds/click.wav", i2s_id=0)
+        elif event_type == var.EVENT_AUDIO_LONG:
+            await play_wav("/sounds/long_click.wav", i2s_id=0)
+        else:
+            await play_wav("/sounds/click.wav", i2s_id=0)
