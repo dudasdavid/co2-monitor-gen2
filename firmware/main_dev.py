@@ -243,7 +243,7 @@ async def main():
     ui.create_sensor_table()
     ui.create_co2_screen()
     ui.create_co2_chart_screen()
-    ui.create_dummy_screen()
+    #ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
     #ui.create_status_bar(top_layer)
 
