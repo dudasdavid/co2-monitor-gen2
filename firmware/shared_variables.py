@@ -7,21 +7,32 @@ class SimpleQueue:
     def __init__(self):
         self._items = []
         self._lock = asyncio.Lock()
+        self._event = asyncio.Event()
 
     async def put(self, item):
         async with self._lock:
             self._items.append(item)
+            self._event.set()
 
     def put_nowait(self, item):
         # Safe if everything runs on the same thread/core
         self._items.append(item)
+        self._event.set()
 
     async def get(self):
         while True:
+            await self._event.wait()
+
             async with self._lock:
                 if self._items:
-                    return self._items.pop(0)
-            await asyncio.sleep_ms(10)
+                    item = self._items.pop(0)
+
+                    if not self._items:
+                        self._event.clear()
+
+                    return item
+                else:
+                    self._event.clear()
 
 # Create a global queue instance
 button_events = SimpleQueue()
