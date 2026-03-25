@@ -520,7 +520,7 @@ def create_co2_chart_screen():
 
     # Grid lines
     chart.set_div_line_count(5, 5)
-    chart.set_style_line_color(lv.color_hex(0x404040), lv.PART.MAIN)
+    chart.set_style_line_color(lv.color_hex(0x606060), lv.PART.MAIN)
     chart.set_style_line_opa(lv.OPA._50, lv.PART.MAIN)
     chart.set_style_line_width(1, lv.PART.MAIN)
     chart.set_style_line_dash_width(4, lv.PART.MAIN)
