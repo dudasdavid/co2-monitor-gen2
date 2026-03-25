@@ -631,7 +631,7 @@ def create_sensor_table():
     page.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
     table = lv.table(page)
-    table.set_size(SCREEN_W, 950)
+    table.set_size(SCREEN_W, 23*40+100)
     table.align(lv.ALIGN.TOP_LEFT, 0, 0)
 
     # ✅ Make sure table itself does NOT scroll -> removes 2nd scrollbar
@@ -646,7 +646,7 @@ def create_sensor_table():
 
     # 3 columns and 18 rows
     table.set_column_count(3)
-    table.set_row_count(21)
+    table.set_row_count(23)
 
     table.set_column_width(0, 5)
     table.set_column_width(1, 110)
@@ -674,6 +674,9 @@ def create_sensor_table():
     table.set_cell_value(18, 1, "Local time")
     table.set_cell_value(19, 1, "AP enabled")
     table.set_cell_value(20, 1, "WiFi")
+    table.set_cell_value(21, 1, "/ storage")
+    table.set_cell_value(22, 1, "RAM")
+    
 
     # Styles
     #table.set_style_bg_color(lv.color_hex(0x101010), 0)
@@ -726,6 +729,9 @@ def create_sensor_table():
             table.set_cell_value(20, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
         else:
             table.set_cell_value(20, 2, "False")
+
+        table.set_cell_value(21, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
+        table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
 
     lv.timer_create(table_update_cb, 1000, None)
 
