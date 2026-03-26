@@ -47,7 +47,7 @@ _LCD_D7 = const(17)
 _LCD_RS = const(18)
 _LCD_RST = const(21)
 _LCD_BACKLIGHT = const(42)
-_LCD_FREQ = const(4000000)
+_LCD_FREQ = const(6000000)
 # SPI display pins
 _LCD_SPI_FREQ = const(20000000)
 _LCD_DC = const(18)
@@ -59,7 +59,9 @@ _SPI_SCK = const(3)
 _SPI_MOSI = const(10)
 _SPI_MISO = const(0)
 
-_BUFFER_SIZE = const(75000)
+_BUFFER_LINES = const(40)
+_BUFFER_SIZE = const(240 * _BUFFER_LINES * 2)
+#_BUFFER_SIZE = const(75000)
 
 # touch device pins
 _SCL = const(9)
@@ -148,7 +150,7 @@ def init_display_spi():
         freq=_LCD_SPI_FREQ 
     )
 
-    # Set a big enough buffer to have smooth experiance (in expense of RAM)
+    # Set a big enough buffer to have smooth experience (in expense of RAM)
     fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
     fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
 
