@@ -12,7 +12,7 @@ I2S_SCK_PIN = const(5) # BCLK
 I2S_WS_PIN  = const(4) # LRC
 I2S_SD_PIN  = const(7) # Master DOUT / Slave DIN
 
-CHUNK = 4096
+CHUNK = 1024
 
 def _wav_info_and_seek_data(f):
     # Minimal WAV parser (PCM only)
@@ -57,37 +57,47 @@ def load_wav_pcm(path):
         data = f.read(data_size)
         return ch, rate, data
 
-async def play_pcm(ch, rate, pcm, tail = 1):
-    # i2s cannot be globally initialized and kept initialized because it crashes lvgl ui
+async def play_pcm(pcm, tail = 0):
+    # cannot initialize i2s globally, due to several glitches with DMA pressure
     audio = I2S(
         0,
         sck=Pin(I2S_SCK_PIN),
         ws=Pin(I2S_WS_PIN),
         sd=Pin(I2S_SD_PIN),
         mode=I2S.TX,
-        bits=16,
-        format=I2S.MONO if ch == 1 else I2S.STEREO,
-        rate=rate,
-        ibuf=40000
+        bits=16,         # All samples are 16-bit PCM
+        format=I2S.MONO, # All samples are MONO
+        rate=8000,       # All samples are 8kHz
+        ibuf=3000
     )
+    
+    sw = asyncio.StreamWriter(audio)
     
     try:
         mv = memoryview(pcm)
+
         for i in range(0, len(pcm), CHUNK):
-            audio.write(mv[i:i+CHUNK])
-            #await asyncio.sleep_ms(0)
-        # push a little silence to flush the pipeline
-        tail = bytearray(1024*tail) # 0s = silence (16-bit PCM)
-        audio.write(tail)
+            sw.write(mv[i:i + CHUNK])
+            await sw.drain()          # non-blocking feed to I2S
+
+        if tail > 0:
+            tail = bytearray(1024 * tail)
+            sw.write(tail)
+            await sw.drain()
+
+        # Give the hardware a short moment to finish shifting out the last DMA-buffered samples.
+        await asyncio.sleep_ms(20)
+
     finally:
         audio.deinit()
 
 async def audio_task():
     #Init
-    log = Logger("wav", debug_enabled=True)
+    log = Logger("i2s", debug_enabled=True)
+    
     # Load and play boot sound ASAP
     boot_ch, boot_rate, boot_pcm = load_wav_pcm("/sounds/oxp.wav")
-    await play_pcm(boot_ch, boot_rate, boot_pcm, tail = 20)
+    await play_pcm(boot_pcm, tail = 1)
 
     # Pre-load other sound samples to RAM
     click_ch, click_rate, click_pcm = load_wav_pcm("/sounds/click.wav")
@@ -101,16 +111,16 @@ async def audio_task():
         if event_type == var.EVENT_AUDIO_SHORT:
             # A small sleep is needed for screen change otherwise i80 display driver will glitch due to i2s dma
             if var.hw_variant == "i80":
-                await asyncio.sleep_ms(60)
+                await asyncio.sleep_ms(20)
             elif var.hw_variant == "spi":
-                await asyncio.sleep_ms(60)
-            await play_pcm(click_ch, click_rate, click_pcm, tail=35)
+                await asyncio.sleep_ms(20)
+            await play_pcm(click_pcm)
         elif event_type == var.EVENT_AUDIO_LONG:
             pass
-            await play_pcm(long_ch, long_rate, long_pcm, tail = 10)
+            await play_pcm(long_pcm)
         elif event_type == var.EVENT_AUDIO_OFF:
-            pass
-            await play_pcm(off_ch, off_rate, off_pcm)
+            await asyncio.sleep_ms(100)
+            await play_pcm(off_pcm)
         else:
             pass
-            await play_pcm(click_ch, click_rate, click_pcm, tail=35)
+            await play_pcm(click_pcm)
