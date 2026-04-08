@@ -384,7 +384,7 @@ def create_timezone_screen(alt=False):
     title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
 
     # These are the key arc-label controls in LVGL 9.x
-    title.set_radius(100)          # curve radius
+    title.set_radius(100)         # curve radius
     title.set_angle_start(250)    # where text begins
     title.set_angle_size(100)     # span of the text
 
@@ -982,7 +982,7 @@ def create_sensor_table(alt=False):
     table.set_cell_value(16, 1, "RTC time")
     table.set_cell_value(17, 1, "Local date")
     table.set_cell_value(18, 1, "Local time")
-    table.set_cell_value(19, 1, "AP enabled")
+    table.set_cell_value(19, 1, "AP")
     table.set_cell_value(20, 1, "WiFi")
     table.set_cell_value(21, 1, "/ storage")
     table.set_cell_value(22, 1, "RAM")
@@ -1032,13 +1032,23 @@ def create_sensor_table(alt=False):
         table.set_cell_value(17, 2, date_str)
         table.set_cell_value(18, 2, time_str)
 
-        table.set_cell_value(19, 2, "{}".format(var.ap_enabled))
+        if var.ap_enabled:
+            table.set_cell_value(19, 2, "On: {}s".format(int(var.ap_disable_timer)))
+        elif var.ap_request:
+            table.set_cell_value(19, 2, "Requested...")
+        else:
+            table.set_cell_value(19, 2, "Disabled")
+            
         if var.wifi_connected:
             table.set_cell_value(20, 2, var.wifi_ip)
+        elif var.ap_enabled:
+            table.set_cell_value(20, 2, "Disabled")
+        elif var.wifi_connecting:
+            table.set_cell_value(20, 2, "Connecting...")
         elif var.wifi_sleep:
             table.set_cell_value(20, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
         else:
-            table.set_cell_value(20, 2, "False")
+            table.set_cell_value(20, 2, "Disabled")
 
         table.set_cell_value(21, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
         table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
