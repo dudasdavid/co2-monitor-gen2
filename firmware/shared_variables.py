@@ -140,6 +140,7 @@ except:
 
 ap_request = False
 ap_enabled = False
+ap_disable_timer = 69
 wifi_connected = False
 wifi_connecting = False
 ntp_time_synchronized = False
