@@ -4,6 +4,7 @@ import persistent_config
 
 hw_variant = None # Can be "i80" or "spi"
 debug = False
+serial_number = 0
 
 class SimpleQueue:
     def __init__(self):

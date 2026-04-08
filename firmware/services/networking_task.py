@@ -334,6 +334,7 @@ def ap_stop(ap):
 
 async def networking_task(period_on = 10.0, period_off = 50.0):
     #Init
+    network.hostname("CO2-Sensor-SNr"+str(var.serial_number))
     ap = network.WLAN(network.AP_IF)
     wlan = network.WLAN(network.STA_IF)
     
