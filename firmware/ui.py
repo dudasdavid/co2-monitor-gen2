@@ -18,7 +18,7 @@ LOCK_THRESHOLD  = 12  # when horizontal movement is clearly starting
 def localtime_with_offset(offset_sec=var.TZ_OFFSET):
     # get current UTC epoch
     utc_epoch = time.time()
-    
+        
     # apply offset
     local_epoch = utc_epoch + offset_sec
     
@@ -720,7 +720,7 @@ def create_sensor_table():
         table.set_cell_value(16, 2, time_str)
 
 
-        timestamp = localtime_with_offset()
+        timestamp = localtime_with_offset(var.TZ_OFFSET)
         date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
         time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
         table.set_cell_value(17, 2, date_str)

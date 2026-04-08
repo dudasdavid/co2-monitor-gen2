@@ -1,5 +1,6 @@
 # shared_variables.py
 import uasyncio as asyncio
+import persistent_config
 
 hw_variant = None # Can be "i80" or "spi"
 debug = False
@@ -131,7 +132,11 @@ display_view = 0
 
 _http_lock = asyncio.Lock()
 
-TZ_OFFSET = 1 * 3600
+try:
+    TZ_OFFSET = persistent_config.TZ_OFFSET
+except:
+    print("TZ offset cannot be read from persistent_config.py!")
+    TZ_OFFSET = 0
 
 ap_request = False
 ap_enabled = False
