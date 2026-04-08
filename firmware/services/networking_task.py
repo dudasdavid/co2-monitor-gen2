@@ -261,6 +261,7 @@ async def wifi_connect(wlan, timeout_s = 30):
             return False
         
         if _ms_since(start_ms, _now_ms()) > timeout_ms:
+            print(".") # Print a final dot to start a new line
             log.error("WiFi connection timed out!")
             wlan.disconnect()
             wlan.active(False)
@@ -271,6 +272,7 @@ async def wifi_connect(wlan, timeout_s = 30):
         print(".", end="")
         await asyncio.sleep_ms(500)
 
+    print(".") # Print a final dot to start a new line
     log.info("WiFi connected! IP address:", wlan.ifconfig()[0])
     var.wifi_ip = wlan.ifconfig()[0]
     var.wifi_connecting = False

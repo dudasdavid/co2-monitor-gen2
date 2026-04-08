@@ -5,6 +5,7 @@ import persistent_config
 hw_variant = None # Can be "i80" or "spi"
 debug = False
 serial_number = 0
+hostname = "CO2-Sensor-SNr"+str(serial_number)
 
 class SimpleQueue:
     def __init__(self):
@@ -147,6 +148,7 @@ wifi_connecting = False
 ntp_time_synchronized = False
 rtc_time_synchronized = False
 wifi_ready_evt = asyncio.Event()
+first_connect = True
 ssid_save_successful = False
 wifi_ip = None
 wifi_sleep = False
