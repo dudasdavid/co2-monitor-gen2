@@ -231,6 +231,92 @@ def create_dummy_screen(alt=False):
     
     return scr
 
+def create_ap_screen(alt=False):
+
+    lv = init()
+
+    scr = lv.obj()
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+    scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
+    # Title
+    title = lv.arclabel(scr)
+    title.set_size(240, 240)
+    title.center()
+    title.set_text("ACCESS POINT")
+    title.set_style_text_font(lv.font_montserrat_14, 0)
+    title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    title.set_radius(100)
+    title.set_angle_start(245)
+    title.set_angle_size(110)
+
+    # Big button
+    btn_ap = lv.obj(scr)
+    btn_ap.set_size(180, 90)
+    btn_ap.align(lv.ALIGN.CENTER, 0, 0)
+    btn_ap.add_flag(lv.obj.FLAG.CLICKABLE)
+    btn_ap.remove_flag(lv.obj.FLAG.SCROLLABLE)
+    btn_ap.set_style_radius(18, 0)
+    btn_ap.set_style_pad_all(0, 0)
+    btn_ap.set_style_border_width(0, 0)
+
+    btn_label = lv.label(btn_ap)
+    btn_label.set_text("ACTIVATE AP")
+    btn_label.set_style_text_font(lv.font_montserrat_24, 0)
+    btn_label.center()
+
+    # Deactivation label
+    label = lv.label(scr)
+    label.set_text(" ")
+    label.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    label.align(lv.ALIGN.CENTER, 0, 70)
+
+    # Visual state updater
+    def update_button_state():
+        if not var.ap_request:
+            btn_ap.add_flag(lv.obj.FLAG.CLICKABLE)
+            btn_ap.set_style_bg_color(lv.color_hex(0x404040), 0)
+            btn_ap.set_style_bg_opa(lv.OPA.COVER, 0)
+            btn_label.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+            label.set_text(" ")
+        else:
+            btn_ap.remove_flag(lv.obj.FLAG.CLICKABLE)
+            btn_ap.set_style_bg_color(lv.color_hex(0x181818), 0)
+            btn_ap.set_style_bg_opa(lv.OPA.COVER, 0)
+            btn_label.set_style_text_color(lv.color_hex(0x606060), 0)
+            label.set_text("Auto disable in " + str(int(var.ap_disable_timer)) + "s")
+
+    # Button callback
+    def ap_btn_cb(e):
+        var.ap_request = True
+
+    btn_ap.add_event_cb(ap_btn_cb, lv.EVENT.CLICKED, None)
+
+    # Periodic checker
+    def ap_timer_cb(timer):
+        try:
+            update_button_state()
+        except Exception as e:
+            print("AP timer error:", e)
+
+    ap_timer = lv.timer_create(ap_timer_cb, 2000, None)
+
+    # Initial state
+    update_button_state()
+
+    # Swipe support
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    screen_name = "Acces Point"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
+
+    return scr
+
 def create_timezone_screen(alt=False):
     
     lv = init()
