@@ -150,9 +150,14 @@ wifi_ip = None
 wifi_sleep = False
 sleep_till_next_connection = 0
 
+# screens are main screens, alt screens are a second page of screens
 screens = []
+screens_alt = []
 screen_names = []
+screen_names_alt = []
 current_idx = 0
+current_idx_alt = 0
+selected_alt = 0
 
 touch_start_x = 0
 touch_start_y = 0
@@ -167,7 +172,7 @@ scd41_co2_peak_ppm = 400
 scd41_co2_threshold = 1800
 scd41_co2_detected = 0
 scd41_co2_history = [400] # Must contain 1 placeholder element
-scd41_co2_max_display_history = 30
+scd41_co2_max_display_history = 4*12 # 4 hours with 5min resolution
 
 history_loaded = False
 

@@ -219,7 +219,7 @@ async def main():
     # 2) spawn threads
     asyncio.create_task(sensor_task(0.3))
     asyncio.create_task(audio_task())
-    await asyncio.sleep(5)
+    await asyncio.sleep(6)
     asyncio.create_task(idle_task(5.0))
     asyncio.create_task(led_task(0.03))
     asyncio.create_task(backlight_task(0.1))
@@ -240,9 +240,10 @@ async def main():
 
     # 3) start UI  
     #top_layer = lv.layer_top()
-    ui.create_sensor_table()
+    ui.create_sensor_table(alt = True)
     ui.create_co2_screen()
     ui.create_co2_chart_screen()
+    ui.create_timezone_screen(alt = True)
     #ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
     #ui.create_status_bar(top_layer)

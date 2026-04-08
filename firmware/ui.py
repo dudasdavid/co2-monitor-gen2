@@ -31,25 +31,44 @@ def show_screen(idx, lv_animation):
     lv = init()
     if not var.screens:
         return
-    var.current_idx = idx % len(var.screens)
+    
+    if var.selected_alt == 0:
+        var.current_idx = idx % len(var.screens)
+        screen = var.screens[var.current_idx]
+    else:
+        var.current_idx_alt = idx % len(var.screens_alt)
+        screen = var.screens_alt[var.current_idx_alt]
+        
     #lv.screen_load(var.screens[var.current_idx])
     lv.screen_load_anim(
-        var.screens[var.current_idx],
-        lv_animation,   # animation type
-        300,                             # duration in ms
-        0,                               # delay in ms
-        False                            # auto delete old screen
+        screen,
+        lv_animation, # animation type
+        30,           # duration in ms
+        0,            # delay in ms
+        False         # auto delete old screen
     )
 
 def next_screen(audio_feedback=True):
     lv = init()
-    show_screen(var.current_idx + 1, lv.SCREEN_LOAD_ANIM.OVER_LEFT)
+    if var.selected_alt == 0:
+        idx = var.current_idx + 1
+    else:
+        idx = var.current_idx_alt + 1
+        
+    show_screen(idx, lv.SCREEN_LOAD_ANIM.NONE) # OUT_LEFT
+    
     if audio_feedback:
         var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
 
 def prev_screen(audio_feedback=True):
     lv = init()
-    show_screen(var.current_idx - 1, lv.SCREEN_LOAD_ANIM.OVER_RIGHT)
+    if var.selected_alt == 0:
+        idx = var.current_idx - 1
+    else:
+        idx = var.current_idx_alt - 1
+    
+    show_screen(idx, lv.SCREEN_LOAD_ANIM.NONE) # OUT_RIGHT
+    
     if audio_feedback:
         var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
         
@@ -95,7 +114,7 @@ def create_welcome_screen():
 
     return scr
 
-def create_gradient_screen():
+def create_gradient_screen(alt=False):
     
     lv = init()
     
@@ -167,14 +186,19 @@ def create_gradient_screen():
     # Enable swipe on the full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
-    var.screens.append(scr)
-    var.screen_names.append("Gradient")
+    screen_name = "Gradient"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
     
     #lv.screen_load(scr)
     
     return scr
 
-def create_dummy_screen():
+def create_dummy_screen(alt=False):
     
     lv = init()
     
@@ -195,14 +219,155 @@ def create_dummy_screen():
     # Enable swipe on the full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
-    var.screens.append(scr)
-    var.screen_names.append("Dummy")
+    screen_name = "Dummy"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
     
     #lv.screen_load(scr)
     
     return scr
 
-def create_co2_screen():
+def create_timezone_screen(alt=False):
+    
+    lv = init()
+    
+    scr = lv.obj()
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+
+    # -----------------------------
+    # Helpers
+    # -----------------------------
+    def get_hours():
+        return int(var.TZ_OFFSET // 3600)
+
+    def set_hours(h):
+        var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
+        
+        if h < -12:
+            h = -12
+        if h > 14:
+            h = 14
+
+        seconds = h * 3600
+        var.TZ_OFFSET = seconds
+        
+        # -----------------------------
+        # Update persistent_config.py
+        # -----------------------------
+        try:
+            with open("persistent_config.py", "r") as f:
+                lines = f.readlines()
+
+            new_lines = []
+            found = False
+
+            for line in lines:
+                if line.strip().startswith("TZ_OFFSET"):
+                    new_lines.append("TZ_OFFSET = {}\n".format(seconds))
+                    found = True
+                else:
+                    new_lines.append(line)
+
+            # If not found, append it (safety)
+            if not found:
+                new_lines.append("\nTZ_OFFSET = {}\n".format(seconds))
+
+            with open("persistent_config.py", "w") as f:
+                f.write("".join(new_lines))
+
+        except Exception as e:
+            print("Config write error:", e)
+        
+        update_label()
+
+    def update_label():
+        h = get_hours()
+        sign = "+" if h >= 0 else ""
+        label.set_text("UTC {}{}".format(sign, h))
+
+    # Curved title
+    title = lv.arclabel(scr)
+    title.set_size(240, 240)
+    title.center()
+    title.set_text("TIME ZONE")
+    title.set_style_text_font(lv.font_montserrat_14, 0)
+    title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+
+    # These are the key arc-label controls in LVGL 9.x
+    title.set_radius(100)          # curve radius
+    title.set_angle_start(250)    # where text begins
+    title.set_angle_size(100)     # span of the text
+
+    # Center label
+    label = lv.label(scr)
+    label.set_style_text_font(lv.font_montserrat_34, 0)
+    label.align(lv.ALIGN.TOP_MID, 0, 110)
+
+    # + BUTTON (top)
+    btn_plus = lv.obj(scr)
+    btn_plus.set_size(100, 60)
+    btn_plus.align(lv.ALIGN.TOP_MID, 0, 40)
+
+    # Make it look like a button
+    btn_plus.set_style_bg_color(lv.color_hex(0x333333), 0)
+    btn_plus.set_style_radius(10, 0)
+
+    label_plus = lv.label(btn_plus)
+    label_plus.set_text("+")
+    label_plus.set_style_text_font(lv.font_montserrat_32, 0)
+    label_plus.center()
+
+    def plus_cb(e):
+        set_hours(get_hours() + 1)
+
+    btn_plus.add_event_cb(plus_cb, lv.EVENT.CLICKED, None)
+
+    # - BUTTON (bottom)
+    btn_minus = lv.obj(scr)
+    btn_minus.set_size(100, 60)
+    btn_minus.align(lv.ALIGN.BOTTOM_MID, 0, -20)
+
+    btn_minus.set_style_bg_color(lv.color_hex(0x333333), 0)
+    btn_minus.set_style_radius(10, 0)
+
+    label_minus = lv.label(btn_minus)
+    label_minus.set_text("-")
+    label_minus.set_style_text_font(lv.font_montserrat_32, 0)
+    label_minus.center()
+
+    def minus_cb(e):
+        set_hours(get_hours() - 1)
+
+    btn_minus.add_event_cb(minus_cb, lv.EVENT.CLICKED, None)
+
+    btn_plus.remove_flag(lv.obj.FLAG.SCROLLABLE)
+    btn_minus.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
+    # Make the buttons clickable
+    btn_plus.add_flag(lv.obj.FLAG.CLICKABLE)
+    btn_minus.add_flag(lv.obj.FLAG.CLICKABLE)
+
+    # Init label
+    update_label()
+
+    # Swipe
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    screen_name = "Timezone"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
+
+    return scr
+
+def create_co2_screen(alt=False):
     lv = init()
 
     scr = lv.obj()
@@ -337,8 +502,13 @@ def create_co2_screen():
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
-    var.screens.append(scr)
-    var.screen_names.append("CO2")
+    screen_name = "CO2"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
 
     return scr
 
@@ -487,7 +657,7 @@ def _add_faded_area(e, line_dsc):
 
     lv.draw_rect(layer, rect_dsc, rect_area)
 
-def create_co2_chart_screen():
+def create_co2_chart_screen(alt=False):
     lv = init()
 
     scr = lv.obj()
@@ -517,6 +687,9 @@ def create_co2_chart_screen():
     # Line chart
     chart.set_type(lv.chart.TYPE.LINE)
     chart.set_update_mode(lv.chart.UPDATE_MODE.SHIFT)
+    
+    # Change marker size to 0
+    chart.set_style_size(0, 0, lv.PART.INDICATOR)
 
     # Grid lines
     chart.set_div_line_count(5, 5)
@@ -528,9 +701,47 @@ def create_co2_chart_screen():
     
     # Y range
     chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, 300, 1000)
-
     ser = chart.add_series(lv.color_hex(0x00ff66), lv.chart.AXIS.PRIMARY_Y)
 
+    # X axis labels
+    label_x_1 = lv.label(chart)
+    label_x_1.set_text("-1h")
+    label_x_1.set_style_text_color(lv.color_hex(0x606060), 0)
+    label_x_1.set_style_bg_color(lv.color_hex(0x000000), 0)
+    label_x_1.set_style_bg_opa(lv.OPA._40, 0)
+    label_x_1.set_style_pad_all(0, 1)
+    label_x_1.align(lv.ALIGN.TOP_MID, 58, 204)
+    label_x_2 = lv.label(chart)
+    label_x_2.set_text("-2h")
+    label_x_2.set_style_text_color(lv.color_hex(0x606060), 0)
+    label_x_2.set_style_bg_color(lv.color_hex(0x000000), 0)
+    label_x_2.set_style_bg_opa(lv.OPA._40, 0)
+    label_x_2.set_style_pad_all(0, 1)
+    label_x_2.align(lv.ALIGN.TOP_MID, -3, 220)
+    label_x_3 = lv.label(chart)
+    label_x_3.set_text("-3h")
+    label_x_3.set_style_text_color(lv.color_hex(0x606060), 0)
+    label_x_3.set_style_bg_color(lv.color_hex(0x000000), 0)
+    label_x_3.set_style_bg_opa(lv.OPA._40, 0)
+    label_x_3.set_style_pad_all(0, 1)
+    label_x_3.align(lv.ALIGN.TOP_MID, -64, 204)
+    
+    # Y axis labels
+    label_y_1 = lv.label(chart)
+    label_y_1.set_text("600")
+    label_y_1.set_style_text_color(lv.color_hex(0x606060), 0)
+    label_y_1.set_style_bg_color(lv.color_hex(0x000000), 0)
+    label_y_1.set_style_bg_opa(lv.OPA._40, 0)
+    label_y_1.set_style_pad_all(1, 0)
+    label_y_1.align(lv.ALIGN.TOP_MID, -85, 49)
+    label_y_2 = lv.label(chart)
+    label_y_2.set_text("400")
+    label_y_2.set_style_text_color(lv.color_hex(0x606060), 0)
+    label_y_2.set_style_bg_color(lv.color_hex(0x000000), 0)
+    label_y_2.set_style_bg_opa(lv.OPA._40, 0)
+    label_y_2.set_style_pad_all(1, 0)
+    label_y_2.align(lv.ALIGN.TOP_MID, -85, 170)
+        
     # Title just so we know screen loaded
     label = lv.label(scr)
     label.set_text("CO2 ppm")
@@ -581,6 +792,10 @@ def create_co2_chart_screen():
                                 
         # Or comment this out to stick to fixed 0…3000 range above
         chart.set_axis_range(lv.chart.AXIS.PRIMARY_Y, y_min, y_max)
+        
+        # Update Y labels
+        label_y_1.set_text(str(int((y_max - (y_max - y_min)/4)/10)*10))
+        label_y_2.set_text(str(int((y_min + (y_max - y_min)/4)/10)*10))
 
         # Fill the backing array directly
         y_points = chart.get_series_y_array(ser)
@@ -596,12 +811,17 @@ def create_co2_chart_screen():
 
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
-    var.screens.append(scr)
-    var.screen_names.append("CO2 chart")
+    screen_name = "CO2 chart"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
 
     return scr
 
-def create_sensor_table():
+def create_sensor_table(alt=False):
     lv = init()
     scr = lv.obj()
 
@@ -742,8 +962,13 @@ def create_sensor_table():
     # Swipe on screen (fine)
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
-    var.screens.append(scr)
-    var.screen_names.append("Sensors")
+    screen_name = "Sensors"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
     return scr
 
 
