@@ -233,9 +233,10 @@ async def wifi_setup_http_server(log):
         except:
             pass
         log.info("WiFi setup portal stopped")
-        if var.ssid_save_successful:
-            log.warning("New WiFi credentials were saved, restart....")
-            machine.reset()
+        #if var.ssid_save_successful:
+            #log.warning("New WiFi credentials were saved, restart....")
+            #machine.reset()
+            
 
 async def wifi_connect(wlan, timeout_s = 30):
     SSID, PASSWORD = load_wifi_creds()
