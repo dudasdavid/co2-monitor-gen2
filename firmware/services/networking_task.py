@@ -258,6 +258,8 @@ async def wifi_connect(wlan, timeout_s = 30):
             wlan.disconnect()
             wlan.active(False)
             var.wifi_connected = False
+            var.wifi_connecting = False
+            var.wifi_sleep = False
             return False
         
         if _ms_since(start_ms, _now_ms()) > timeout_ms:
@@ -267,6 +269,7 @@ async def wifi_connect(wlan, timeout_s = 30):
             wlan.active(False)
             var.wifi_connected = False
             var.wifi_connecting = False
+            var.wifi_sleep = False
             return False
         
         print(".", end="")
