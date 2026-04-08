@@ -9,7 +9,7 @@ import shared_variables as var
  
 async def idle_task(period = 1.0):
     #Init
-    log = Logger("idle", debug_enabled=True)
+    log = Logger("idle", debug_enabled=False)
 
     #Run
     while True:
