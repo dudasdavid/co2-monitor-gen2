@@ -8,7 +8,7 @@ from drivers import pcf85063 as pcf85063_driver
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("rtc", debug_enabled=True)
+log = Logger("rtc", debug_enabled=False)
 
 def is_time_diff_over_threshold(ntp_time, rtc_time, threshold_seconds=60):
     """
