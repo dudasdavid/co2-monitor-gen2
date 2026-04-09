@@ -231,6 +231,236 @@ def create_dummy_screen(alt=False):
     
     return scr
 
+def create_sensor_screen(alt=False):
+    lv = init()
+
+    scr = lv.obj()
+    scr.set_size(240, 240)
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+    scr.set_style_bg_opa(lv.OPA.COVER, 0)
+    scr.set_style_border_width(0, 0)
+    scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
+    # -----------------------------
+    # Helpers
+    # -----------------------------
+    def make_label(parent, text, x, y, color=0xFFFFFF, font=None):
+        
+        lbl = lv.label(parent)
+        lbl.set_text(text)
+        lbl.set_style_text_color(lv.color_hex(color), 0)
+        lbl.set_style_text_line_space(0, 0)
+        lbl.set_style_text_letter_space(0, 0)
+        lbl.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        lbl.set_style_pad_all(0, 0)
+        lbl.remove_flag(lv.obj.FLAG.SCROLLABLE)
+        
+        if font is not None:
+            lbl.set_style_text_font(font, 0)
+            
+        lbl.align(lv.ALIGN.CENTER, x, y)
+        return lbl
+
+    def set_arc_style(arc):
+        arc.remove_style_all()
+        arc.set_size(220, 220)
+        arc.center()
+        arc.remove_flag(lv.obj.FLAG.CLICKABLE)
+        arc.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
+        # Hide background arc completely
+        arc.set_style_arc_opa(lv.OPA.TRANSP, lv.PART.MAIN)
+
+        # Hide knob
+        arc.set_style_opa(lv.OPA.TRANSP, lv.PART.KNOB)
+
+        # Indicator arc style
+        arc.set_style_arc_width(10, lv.PART.INDICATOR)
+        arc.set_style_arc_rounded(True, lv.PART.INDICATOR)
+        arc.set_style_arc_color(lv.color_hex(0x00FF00), lv.PART.INDICATOR)
+
+    def sensor_color_co2(co2):
+        if co2 < 1000:
+            var.led_request_co2 = "Green"
+            return lv.color_hex(0x55FF00)   # green
+        elif co2 < 1500:
+            var.led_request_co2 = "Yellow"
+            return lv.color_hex(0x00D0FF)   # yellow
+        else:
+            var.led_request_co2 = "Red"
+            return lv.color_hex(0x303BFF)   # red
+
+    def sensor_color_temp(temp):
+        if temp < 18:
+            var.led_request_temp = "Blue"
+            return lv.color_hex(0xFF9933)   # blue-ish
+        elif temp < 26:
+            var.led_request_temp = "Green"
+            return lv.color_hex(0x55FF00)   # green
+        elif temp < 30:
+            var.led_request_temp = "Yellow"
+            return lv.color_hex(0x00D0FF)   # yellow
+        else:
+            var.led_request_temp = "Red"
+            return lv.color_hex(0x303BFF)   # red
+
+    def sensor_color_hum(hum):
+        if hum < 30:
+            var.led_request_hum = "Yellow"
+            return lv.color_hex(0x00D0FF)   # dry -> yellow
+        elif hum <= 60:
+            var.led_request_hum = "Green"
+            return lv.color_hex(0x55FF00)   # good -> green
+        else:
+            var.led_request_hum = "Red"
+            return lv.color_hex(0x303BFF)   # too humid -> red
+
+    # -----------------------------
+    # Separator lines (120° apart)
+    # -----------------------------
+    sep_color = lv.color_hex(0x303030)
+
+    # Coordinates chosen for a 240x240 round display
+    # Center is (120,120)
+    # One separator goes upward, the other two downward-left/downward-right
+    line_style = lv.style_t()
+    line_style.init()
+    line_style.set_line_color(sep_color)
+    line_style.set_line_width(2)
+    line_style.set_line_rounded(True)
+
+    # top separator
+    line1_points = [
+        {"x": 120, "y": 120},
+        {"x": 33, "y": 70},
+    ]
+    line1 = lv.line(scr)
+    line1.set_points(line1_points, len(line1_points))
+    line1.add_style(line_style, 0)
+
+    # bottom-left separator
+    line2_points = [
+        {"x": 120, "y": 120},
+        {"x": 207, "y": 70},
+    ]
+    line2 = lv.line(scr)
+    line2.set_points(line2_points, len(line2_points))
+    line2.add_style(line_style, 0)
+
+    # bottom-right separator
+    line3_points = [
+        {"x": 120, "y": 120},
+        {"x": 120, "y": 220},
+    ]
+    line3 = lv.line(scr)
+    line3.set_points(line3_points, len(line3_points))
+    line3.add_style(line_style, 0)
+
+    # -----------------------------
+    # Edge arcs
+    # -----------------------------
+    # Using 3 separate arcs with small gaps so they don't touch.
+    # Segment centers:
+    #   CO2       -> around 270°
+    #   TEMP      -> around 150°
+    #   HUMIDITY  -> around 30°
+    # In LVGL angles:
+    #   0° = right, 90° = bottom, 180° = left, 270° = top
+    # So top is 240..300 roughly, bottom-left 120..180, bottom-right 0..60
+    # with gaps between them.
+
+    arc_co2 = lv.arc(scr)
+    set_arc_style(arc_co2)
+    arc_co2.set_rotation(0)
+    arc_co2.set_bg_angles(0, 360)
+    arc_co2.set_angles(215, 325)
+
+    arc_temp = lv.arc(scr)
+    set_arc_style(arc_temp)
+    arc_temp.set_rotation(0)
+    arc_temp.set_bg_angles(0, 360)
+    arc_temp.set_angles(95, 205)
+
+    arc_hum = lv.arc(scr)
+    set_arc_style(arc_hum)
+    arc_hum.set_rotation(0)
+    arc_hum.set_bg_angles(0, 360)
+    arc_hum.set_angles(335, 85)
+
+    # -----------------------------
+    # Labels
+    # -----------------------------
+    # Titles
+    co2_title  = make_label(scr, "CO2",      0, -85, 0x808080)
+    temp_title = make_label(scr, "TEMP",   -42,  5, 0x808080)
+    hum_title  = make_label(scr, "HUM",     45,  5, 0x808080)
+
+    # Values
+    co2_value  = make_label(scr, "--",       0, -52, 0xFFFFFF, font=lv.font_montserrat_44)
+    co2_unit   = make_label(scr, "ppm",      0,  -20, 0x707070)
+
+    temp_value = make_label(scr, "--",     -42,  35, 0xFFFFFF, font=lv.font_montserrat_36)
+    temp_unit  = make_label(scr, "°C",     -20, 80, 0x707070)
+
+    hum_value  = make_label(scr, "--",       45,  35, 0xFFFFFF, font=lv.font_montserrat_36)
+    hum_unit   = make_label(scr, "%",        20, 80, 0x707070)
+
+    # -----------------------------
+    # Refresh callback
+    # -----------------------------
+    def refresh_cb(timer):
+        try:
+            co2 = int(var.sensor_data.co2_scd41)
+        except:
+            co2 = 0
+
+        try:
+            temp = float(var.sensor_data.temp_scd41)
+        except:
+            temp = 0.0
+
+        try:
+            hum = float(var.sensor_data.humidity_scd41)
+        except:
+            hum = 0.0
+
+        co2_value.set_text(str(co2))
+        temp_value.set_text("{:.1f}".format(temp))
+        hum_value.set_text("{:.0f}".format(hum))
+
+        # Realign because text width changes
+        #co2_value.align(lv.ALIGN.CENTER, 0, -35)
+        #co2_unit.align(lv.ALIGN.CENTER, 0, -8)
+
+        #temp_value.align(lv.ALIGN.CENTER, -60, 78)
+        #temp_unit.align(lv.ALIGN.CENTER, -60, 102)
+
+        #hum_value.align(lv.ALIGN.CENTER, 60, 78)
+        #hum_unit.align(lv.ALIGN.CENTER, 60, 102)
+        
+        arc_co2.set_style_arc_color(sensor_color_co2(co2), lv.PART.INDICATOR)
+        arc_temp.set_style_arc_color(sensor_color_temp(temp), lv.PART.INDICATOR)
+        arc_hum.set_style_arc_color(sensor_color_hum(hum), lv.PART.INDICATOR)
+
+    # Initial refresh
+    refresh_cb(None)
+
+    # Refresh every second
+    lv.timer_create(refresh_cb, 3000, None)
+
+    # Enable swipe on the full screen
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    screen_name = "Sensors"
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
+
+    return scr
+
 def create_ap_screen(alt=False):
 
     lv = init()
@@ -583,7 +813,7 @@ def create_co2_screen(alt=False):
         ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
         ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
 
-    lv.timer_create(set_co2_cb, 1000, None)
+    lv.timer_create(set_co2_cb, 2000, None)
 
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)

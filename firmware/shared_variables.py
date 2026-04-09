@@ -183,3 +183,7 @@ history_loaded = False
 EVENT_AUDIO_SHORT = 1
 EVENT_AUDIO_LONG = 2
 EVENT_AUDIO_OFF = 3
+
+led_request_co2 = "Green"
+led_request_temp = "Green"
+led_request_hum = "Green"

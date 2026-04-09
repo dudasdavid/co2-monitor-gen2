@@ -247,6 +247,7 @@ async def main():
     ui.create_sensor_table(alt = True)
     ui.create_co2_screen()
     ui.create_co2_chart_screen()
+    ui.create_sensor_screen()
     ui.create_timezone_screen(alt = True)
     ui.create_ap_screen(alt = True)
     #ui.create_dummy_screen()
