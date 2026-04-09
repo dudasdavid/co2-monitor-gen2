@@ -220,19 +220,14 @@ async def main():
     
     # 2) spawn threads
     asyncio.create_task(sensor_task(0.3))
+    asyncio.create_task(led_task(0.03))
     asyncio.create_task(audio_task())
     await asyncio.sleep(6)
     asyncio.create_task(idle_task(5.0))
     asyncio.create_task(led_task(0.03))
     asyncio.create_task(backlight_task(0.1))
     asyncio.create_task(adc_task(1))
-    asyncio.create_task(history_task(2))
-    asyncio.create_task(storage_task(5))
-    asyncio.create_task(event_handler_task())
-    asyncio.create_task(networking_task(30, 60))
-    asyncio.create_task(ap_auto_disable_task(1))
-    asyncio.create_task(mqtt_task(10))
-    
+
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
         asyncio.create_task(imu_task(i2c_bus, 0.5))
@@ -240,6 +235,17 @@ async def main():
     elif var.hw_variant == "spi":
         asyncio.create_task(io_task(0.5))
 
+    # Start event handler after IO started
+    asyncio.create_task(event_handler_task())
+    
+    # Only load log file after other tasks started
+    asyncio.create_task(history_task(2))
+    asyncio.create_task(storage_task(5))
+
+    # Only start networking related stuff after everything else started
+    asyncio.create_task(networking_task(30, 60))
+    asyncio.create_task(ap_auto_disable_task(1))
+    asyncio.create_task(mqtt_task(10))
     
 
     # 3) start UI  
