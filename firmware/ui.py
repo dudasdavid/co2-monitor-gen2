@@ -89,6 +89,88 @@ def swipe_event_cb(e):
     elif d == lv.DIR.RIGHT:
         prev_screen()
 
+def create_battery_widget(parent, x, y, font=None):
+    lv = init()
+
+    root = lv.obj(parent)
+    root.set_size(50, 50)
+    root.align(lv.ALIGN.CENTER, x, y)
+    root.set_style_bg_opa(lv.OPA.TRANSP, 0)
+    root.set_style_border_width(0, 0)
+    root.set_style_pad_all(0, 0)
+    root.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
+    # Battery icon
+    icon = lv.label(root)
+    icon.set_text(lv.SYMBOL.BATTERY_FULL)
+    icon.set_style_text_color(lv.color_hex(0x666666), 0)
+    icon.set_style_text_letter_space(0, 0)
+    icon.set_style_text_line_space(0, 0)
+
+    if font:
+        icon.set_style_text_font(font, 0)
+
+    icon.align(lv.ALIGN.CENTER, 0, 0)
+
+    # Charging icon overlay
+    charge_shadow = lv.label(root)
+    charge_shadow.set_text(lv.SYMBOL.CHARGE)
+    charge_shadow.set_style_text_color(lv.color_hex(0x000000), 0)
+    charge_shadow.align_to(icon, lv.ALIGN.CENTER, -1, 0)
+    charge_shadow.add_flag(lv.obj.FLAG.HIDDEN)
+    charge_shadow.set_style_text_font(lv.font_montserrat_16, 0)
+    charge = lv.label(root)
+    charge.set_text(lv.SYMBOL.CHARGE)
+    charge.set_style_text_color(lv.color_hex(0x0091B3), 0)
+    charge.align_to(icon, lv.ALIGN.CENTER, 0, 1)
+    charge.add_flag(lv.obj.FLAG.HIDDEN)
+    charge.set_style_text_font(lv.font_montserrat_12, 0)
+
+    # -----------------------------
+    # Update logic
+    # -----------------------------
+    def update():
+        
+        pct = int(var.system_data.bat_percentage)
+        charging = bool(var.system_data.usb_connected)
+
+        # Select icon level
+        if pct <= 10:
+            symbol = lv.SYMBOL.BATTERY_EMPTY
+        elif pct <= 30:
+            symbol = lv.SYMBOL.BATTERY_1
+        elif pct <= 60:
+            symbol = lv.SYMBOL.BATTERY_2
+        elif pct <= 85:
+            symbol = lv.SYMBOL.BATTERY_3
+        else:
+            symbol = lv.SYMBOL.BATTERY_FULL
+
+        icon.set_text(symbol)
+
+        # Color logic
+        if pct <= 20:
+            color = lv.color_hex(0x303BFF)
+        else:
+            color = lv.color_hex(0x666666)
+
+        icon.set_style_text_color(color, 0)
+
+        # Charging icon
+        if charging:
+            charge.remove_flag(lv.obj.FLAG.HIDDEN)
+            charge_shadow.remove_flag(lv.obj.FLAG.HIDDEN)
+        else:
+            charge.add_flag(lv.obj.FLAG.HIDDEN)
+            charge_shadow.add_flag(lv.obj.FLAG.HIDDEN)
+
+    return {
+        "root": root,
+        "icon": icon,
+        "charge": charge,
+        "update": update,
+    }
+
 def create_welcome_screen():
     
     lv = init()
@@ -379,13 +461,13 @@ def create_sensor_screen(alt=False):
     set_arc_style(arc_temp)
     arc_temp.set_rotation(0)
     arc_temp.set_bg_angles(0, 360)
-    arc_temp.set_angles(95, 205)
+    arc_temp.set_angles(102, 205)
 
     arc_hum = lv.arc(scr)
     set_arc_style(arc_hum)
     arc_hum.set_rotation(0)
     arc_hum.set_bg_angles(0, 360)
-    arc_hum.set_angles(335, 85)
+    arc_hum.set_angles(335, 78)
 
     # -----------------------------
     # Labels
@@ -404,6 +486,11 @@ def create_sensor_screen(alt=False):
 
     hum_value  = make_label(scr, "--",    48,  38, 0xFFFFFF, font=lv.font_montserrat_40)
     hum_unit   = make_label(scr, "%",     25,  85, 0x707070)
+
+    # -----------------------------
+    # Battery widget
+    # -----------------------------
+    bat = create_battery_widget(scr, 0, 111, font = lv.font_montserrat_16)
 
     # -----------------------------
     # Refresh callback
@@ -441,6 +528,8 @@ def create_sensor_screen(alt=False):
         arc_co2.set_style_arc_color(sensor_color_co2(co2), lv.PART.INDICATOR)
         arc_temp.set_style_arc_color(sensor_color_temp(temp), lv.PART.INDICATOR)
         arc_hum.set_style_arc_color(sensor_color_hum(hum), lv.PART.INDICATOR)
+        
+        bat["update"]()
 
     # Initial refresh
     refresh_cb(None)
@@ -762,13 +851,18 @@ def create_co2_screen(alt=False):
     ppm_label.align(lv.ALIGN.CENTER, 0, 60)
 
     # -----------------------------
-    # Optional title
+    # Title
     # -----------------------------
     title_label = lv.label(scr)
     title_label.set_text("CO2")
     title_label.set_style_text_color(lv.color_hex(0x888888), 0)
     title_label.set_style_text_font(lv.font_montserrat_16, 0)
     title_label.align(lv.ALIGN.CENTER, 0, -75)
+
+    # -----------------------------
+    # Battery widget
+    # -----------------------------
+    bat = create_battery_widget(scr, 0, 87, font = lv.font_montserrat_16)
 
     # -----------------------------
     # Breathing animation
@@ -812,6 +906,8 @@ def create_co2_screen(alt=False):
 
         ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
         ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
+        
+        bat["update"]()
 
     lv.timer_create(set_co2_cb, 2000, None)
 
@@ -1297,242 +1393,3 @@ def create_sensor_table(alt=False):
         var.screen_names_alt.append(screen_name)
     return scr
 
-
-
-def _battery_symbol_from_pct(pct):
-    # LVGL has several battery glyphs in the built-in font
-    if pct <= 5:
-        return lv.SYMBOL.BATTERY_EMPTY
-    elif pct <= 25:
-        return lv.SYMBOL.BATTERY_1
-    elif pct <= 50:
-        return lv.SYMBOL.BATTERY_2
-    elif pct <= 75:
-        return lv.SYMBOL.BATTERY_3
-    else:
-        return lv.SYMBOL.BATTERY_FULL
-
-
-def create_battery_widget(parent, right_pad=6, top_pad=2):
-    """
-    Returns a dict of LVGL objects you can update:
-      w['cont'], w['icon'], w['bolt'], w['pct_lbl']
-    """
-
-    w = {}
-
-    # Container on the right
-    cont = lv.cont(parent)
-    #cont.set_fit(lv.FIT.NONE)
-    #cont.set_layout(lv.LAYOUT.OFF)
-    cont.set_height(parent.get_height())
-    cont.set_width(78)  # tweak if you want it tighter/wider
-    cont.align(parent, lv.ALIGN.IN_RIGHT_MID, -right_pad, 0)
-    cont.set_fit2(lv.FIT.TIGHT, lv.FIT.TIGHT)     # container hugs its children
-    cont.set_layout(lv.LAYOUT.ROW_MID)            # children placed left→right, vertically centered
-    cont.set_style_local_pad_inner(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 3)
-
-    # Make it visually "flat"
-    cont.set_style_local_bg_opa(lv.obj.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.TRANSP)
-    cont.set_style_local_border_width(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    cont.set_style_local_outline_width(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    cont.set_style_local_shadow_width(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-
-    # Percent label (fixed width-ish so it doesn't “jump”)
-    pct_lbl = lv.label(cont)
-    pct_lbl.set_text("100%")
-    #pct_lbl.align(cont, lv.ALIGN.IN_LEFT_MID, 4, 0)
-
-    # Battery icon
-    icon = lv.label(cont)
-    icon.set_text(lv.SYMBOL.BATTERY_FULL)
-    #icon.align(cont, lv.ALIGN.IN_LEFT_MID, 0, 0)
-
-    # Charging bolt overlay (hidden by default)
-    bolt = lv.label(cont)
-    # If your font has it, this looks nicer than plain "⚡"
-    bolt.set_text(lv.SYMBOL.CHARGE)
-    bolt.set_style_local_text_opa(lv.label.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.TRANSP)
-    #bolt.align(icon, lv.ALIGN.CENTER, 0, 0)
-
-
-
-    w["cont"] = cont
-    w["icon"] = icon
-    w["bolt"] = bolt
-    w["pct_lbl"] = pct_lbl
-    return w
-
-
-def set_battery_widget(w, pct, charging=False):
-    """
-    pct: 0..100
-    charging: True/False
-    """
-    if pct < 0: pct = 0
-    if pct > 100: pct = 100
-
-    w["icon"].set_text(_battery_symbol_from_pct(pct))
-
-    # Fixed-width formatting to reduce visual jitter
-    w["pct_lbl"].set_text("{:>3d}%".format(pct))
-
-    # Show/hide bolt (keep its space by using opacity)
-    w["bolt"].set_style_local_text_opa(
-        lv.label.PART.MAIN,
-        lv.STATE.DEFAULT,
-        lv.OPA.COVER if charging else lv.OPA.TRANSP
-    )
-
-
-def create_status_bar(top_layer):
-    #global btn_left, btn_right
-
-    status = lv.cont(top_layer, None)
-    status.set_fit(lv.FIT.NONE)
-    status.set_layout(lv.LAYOUT.OFF)
-    status.set_width(SCREEN_W)
-    status.set_height(STATUS_BAR_H)
-    status.align(None, lv.ALIGN.IN_TOP_MID, 0, 0)
-
-    status.set_style_local_border_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-    status.set_style_local_outline_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-    status.set_style_local_shadow_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-    status.set_style_local_radius(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-
-    #wifi_icon = lv.label(status, None)
-    #wifi_icon.set_text(SYMBOL_WIFI)
-
-    #sd_icon = lv.label(status, None)
-    #sd_icon.set_text(SYMBOL_SD)
-
-    screen_label = lv.label(status)
-    screen_label.set_text("SYSTEM")
-    screen_label.align(status, lv.ALIGN.CENTER, 0, 0)
-    
-    time_row = lv.cont(status)
-    time_row.set_fit2(lv.FIT.TIGHT, lv.FIT.TIGHT)     # container hugs its children
-    time_row.set_layout(lv.LAYOUT.ROW_MID)            # children placed left→right, vertically centered
-    # remove spacing between hour : minute
-    time_row.set_style_local_pad_inner(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    # remove any visual borders of the container
-    time_row.set_style_local_bg_opa(lv.obj.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.TRANSP)
-    time_row.set_style_local_border_width(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    time_row.set_style_local_pad_all(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    time_row.set_style_local_pad_inner(lv.obj.PART.MAIN, lv.STATE.DEFAULT, 0)
-    # put the whole group where you want
-    time_row.align(status, lv.ALIGN.IN_LEFT_MID, 5, 0)   # change pos as needed
-
-    hour_lbl  = lv.label(time_row)
-    colon_lbl = lv.label(time_row)
-    min_lbl   = lv.label(time_row)
-
-    hour_lbl.set_text("12")
-    colon_lbl.set_text(":")
-    min_lbl.set_text("34")
-      
-    previous_minute = ""
-    previous_label = ""
-    sec = 0
-    
-    batt = create_battery_widget(status)
-    
-    set_battery_widget(batt, 69, charging=False)
-    
-    '''
-    def remove_button_style(btn):
-        btn.set_style_local_border_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-        btn.set_style_local_outline_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-        btn.set_style_local_shadow_width(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-        btn.set_style_local_radius(lv.btn.PART.MAIN, lv.STATE.DEFAULT, 0)
-        #btn.set_style_local_bg_opa(lv.btn.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.TRANSP)
-
-    # Left button
-    var.btn_left = lv.btn(status)
-    var.btn_left.set_size(40, STATUS_BAR_H)
-    var.btn_left.align(status, lv.ALIGN.IN_LEFT_MID, 0, 0)
-    var.btn_left.set_event_cb(nav_btn_event_cb)
-
-    lbl_l = lv.label(var.btn_left)
-    lbl_l.set_text(lv.SYMBOL.LEFT)
-    lbl_l.align(var.btn_left, lv.ALIGN.CENTER, 0, 0)
-
-    # Right button
-    var.btn_right = lv.btn(status)
-    var.btn_right.set_size(40, STATUS_BAR_H)
-    var.btn_right.align(None, lv.ALIGN.IN_RIGHT_MID, 0, 0)
-    var.btn_right.set_event_cb(nav_btn_event_cb)
-
-    lbl_r = lv.label(var.btn_right)
-    lbl_r.set_text(lv.SYMBOL.RIGHT)
-    lbl_r.align(var.btn_right, lv.ALIGN.CENTER, 0, 0)
-    
-    # Remove outlines
-    remove_button_style(var.btn_left)
-    remove_button_style(var.btn_right)
-    '''
-    
-    style_hidden = lv.style_t()
-    style_hidden.init()
-    style_hidden.set_text_opa(lv.STATE.DEFAULT, lv.OPA.TRANSP)
-
-    style_visible = lv.style_t()
-    style_visible.init()
-    style_visible.set_text_opa(lv.STATE.DEFAULT, lv.OPA.COVER)
-    
-    def update_screen_label_cb(timer):
-        nonlocal previous_label
-            
-        label = var.screen_names[var.current_idx]
-        
-        if label != previous_label:
-            s = label
-            screen_label.set_text(s)
-            previous_label = label
-            
-        else:
-            return
-        
-    def update_time_labels_cb(timer):
-        nonlocal sec, previous_minute, batt
-        # read actual time from your var
-        rtc = var.system_data.time_rtc
-
-        if rtc is not None and type(rtc) == tuple:
-            hour = rtc[4]
-            minute = rtc[5]
-        else:
-            hour = 12
-            minute = 34
-        
-        sec += 1
-        
-        #set_hidden removes the label from ui rendering :(
-        #colon_lbl.set_hidden(sec % 2 == 0)
-        if sec % 2 == 0:
-            # invisible but still takes space
-            colon_lbl.set_style_local_text_opa(lv.label.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.TRANSP)
-        else:
-            # visible
-            colon_lbl.set_style_local_text_opa(lv.label.PART.MAIN, lv.STATE.DEFAULT, lv.OPA.COVER)
-            
-        set_battery_widget(batt, int(var.system_data.bat_percentage), var.system_data.charging)
-            
-        if minute != previous_minute:
-            # format HH:MM with leading zeros
-            #s = "{:02}  {:02}".format(hour, minute)
-            s = "{:02}".format(hour)
-            hour_lbl.set_text(s)
-
-            s = "{:02}".format(minute)
-            min_lbl.set_text(s)
-            
-            previous_minute = minute
-            
-        else:
-            return
-        
-    # --- Update screen label in every 50ms ---
-    lv.task_create(update_screen_label_cb, 50, lv.TASK_PRIO.LOW, None)
-    # --- Update time labels in every 1000ms ---
-    lv.task_create(update_time_labels_cb, 1000, lv.TASK_PRIO.LOW, None)
