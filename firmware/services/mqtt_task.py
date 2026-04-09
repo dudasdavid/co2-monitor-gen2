@@ -185,7 +185,11 @@ async def mqtt_task(period = 1.0):
             if var.sensor_data.humidity_scd41 is not None:
                 client.publish(BASE_TOPIC+"/humidity", f"{var.sensor_data.humidity_scd41:.1f}")
             if var.sensor_data.lux_veml7700 is not None:
-                client.publish(BASE_TOPIC+"/lux", f"{var.sensor_data.lux_veml7700:.4f}")
+                if var.sensor_data.lux_veml7700 > 0.0001:
+                    lux = var.sensor_data.lux_veml7700
+                else:
+                    lux = 0.0001
+                client.publish(BASE_TOPIC+"/lux", f"{lux:.4f}")
             if var.system_data.bat_percentage is not None:
                 client.publish(BASE_TOPIC+"/battery", str(int(var.system_data.bat_percentage)))
                 low_battery = 0
