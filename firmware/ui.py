@@ -263,7 +263,7 @@ def create_sensor_screen(alt=False):
 
     def set_arc_style(arc):
         arc.remove_style_all()
-        arc.set_size(220, 220)
+        arc.set_size(240, 240)
         arc.center()
         arc.remove_flag(lv.obj.FLAG.CLICKABLE)
         arc.remove_flag(lv.obj.FLAG.SCROLLABLE)
@@ -391,19 +391,19 @@ def create_sensor_screen(alt=False):
     # Labels
     # -----------------------------
     # Titles
-    co2_title  = make_label(scr, "CO2",      0, -85, 0x808080)
-    temp_title = make_label(scr, "TEMP",   -42,  5, 0x808080)
-    hum_title  = make_label(scr, "HUM",     45,  5, 0x808080)
+    co2_title  = make_label(scr, "CO2",    0, -90, 0x808080)
+    temp_title = make_label(scr, "TEMP", -42,   2, 0x808080)
+    hum_title  = make_label(scr, "HUM",   45,   2, 0x808080)
 
     # Values
-    co2_value  = make_label(scr, "--",       0, -52, 0xFFFFFF, font=lv.font_montserrat_44)
-    co2_unit   = make_label(scr, "ppm",      0,  -20, 0x707070)
+    co2_value  = make_label(scr, "--",     0, -52, 0xFFFFFF, font=lv.font_montserrat_48)
+    co2_unit   = make_label(scr, "ppm",    0, -20, 0x707070)
 
-    temp_value = make_label(scr, "--",     -42,  35, 0xFFFFFF, font=lv.font_montserrat_36)
-    temp_unit  = make_label(scr, "°C",     -20, 80, 0x707070)
+    temp_value = make_label(scr, "--",   -46,  38, 0xFFFFFF, font=lv.font_montserrat_40)
+    temp_unit  = make_label(scr, "°C",   -25,  85, 0x707070)
 
-    hum_value  = make_label(scr, "--",       45,  35, 0xFFFFFF, font=lv.font_montserrat_36)
-    hum_unit   = make_label(scr, "%",        20, 80, 0x707070)
+    hum_value  = make_label(scr, "--",    48,  38, 0xFFFFFF, font=lv.font_montserrat_40)
+    hum_unit   = make_label(scr, "%",     25,  85, 0x707070)
 
     # -----------------------------
     # Refresh callback
