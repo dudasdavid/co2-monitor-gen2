@@ -83,10 +83,9 @@ class SystemData:
         self.i2c_status_unknown = [0x69]
         self.bat_volt = 3.8
         self.bat_percentage = 69
-        self.charging = False
         self.feedback_led = "green"
         self.buttons = [6,6,6]
-        self.usb_connected = 3
+        self.usb_connected = 0
         self.adc_task_timestamp = 0
         self.backlight_task_timestamp = 0
         self.history_task_timestamp = 0
