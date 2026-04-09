@@ -26,7 +26,7 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("network", debug_enabled=True)
+log = Logger("network", debug_enabled=False)
 
 def _now_ms():
     # Prefer monotonic ticks on MicroPython
@@ -263,7 +263,7 @@ async def wifi_connect(wlan, timeout_s = 30):
             return False
         
         if _ms_since(start_ms, _now_ms()) > timeout_ms:
-            print(".") # Print a final dot to start a new line
+            #print(".") # Print a final dot to start a new line
             log.error("WiFi connection timed out!")
             wlan.disconnect()
             wlan.active(False)
@@ -272,19 +272,19 @@ async def wifi_connect(wlan, timeout_s = 30):
             var.wifi_sleep = False
             return False
         
-        print(".", end="")
+        #print(".", end="")
         await asyncio.sleep_ms(500)
 
-    print(".") # Print a final dot to start a new line
+    #print(".") # Print a final dot to start a new line
     log.info("WiFi connected! IP address:", wlan.ifconfig()[0])
     var.wifi_ip = wlan.ifconfig()[0]
     var.wifi_connecting = False
 
     # ---- SYNC TIME FROM NTP ----
-    log.info("Fetching time from NTP...")
+    log.debug("Fetching time from NTP...")
     try:
         ntptime.settime()  # sets internal RTC to UTC
-        log.info("Time synchronized.")
+        log.debug("Time synchronized.")
         var.ntp_time_synchronized = True        
     
     except Exception as e:
@@ -296,7 +296,7 @@ async def wifi_connect(wlan, timeout_s = 30):
 
 def wifi_disconnect(wlan):
     try:
-        log.info("Disconnecting from WiFi...")
+        log.debug("Disconnecting from WiFi...")
         wlan.disconnect()
         wlan.active(False)
         var.wifi_connected = False
@@ -346,6 +346,9 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
     ap.active(False)
     wlan.active(False)
 
+    # Give some time for other tasks to load before dumping networking stack onto them
+    await asyncio.sleep(10)
+
     #Run
     while True:
         
@@ -364,7 +367,7 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
             # After AP mode exits, immediately attempt STA connect once
             log.info("Leaving AP setup mode, trying STA connect with new creds...")
             ok = await wifi_connect(wlan)
-            log.info("Connected:", ok)
+            log.debug("Connected:", ok)
             if ok:
                 var.wifi_ready_evt.set()
 
@@ -378,9 +381,9 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
             continue  # go back to top of loop (handles disconnect/off timing there)
         
         # --- NORMAL STA DUTY-CYCLE MODE ---
-        log.info("Initiating WiFi connection...")
+        log.debug("Initiating WiFi connection...")
         connection_success = await wifi_connect(wlan)
-        log.info("Connected:", connection_success)
+        log.debug("Connected:", connection_success)
         
         if connection_success:
             var.wifi_ready_evt.set()
@@ -401,9 +404,9 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
         
         
         if var.wifi_connected:
-            log.info("Disconnecting WiFi connection...")
+            log.debug("Disconnecting WiFi connection...")
             disconnection_success = wifi_disconnect(wlan)
-            log.info("Disconnected:", disconnection_success)
+            log.info("WiFi disconnected:", disconnection_success)
             var.wifi_sleep = True
         else:
             log.debug("WiFi is not connected, disconnection not needed.")

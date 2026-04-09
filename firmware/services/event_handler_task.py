@@ -42,7 +42,6 @@ async def event_handler_task():
                     ui.show_screen(var.current_idx, lv.SCREEN_LOAD_ANIM.NONE)
                 else:
                     pass
-                    
-
+                
         else:
             log.debug("Unknown event:", btn_name, event_type)

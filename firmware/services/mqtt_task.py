@@ -9,7 +9,7 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("mqtt", debug_enabled=True)
+log = Logger("mqtt", debug_enabled=False)
 
 # MQTT Parameters
 MQTT_SERVER = umqtt.config.mqtt_server
@@ -160,10 +160,10 @@ async def mqtt_task(period = 1.0):
     while True:
         
         await var.wifi_ready_evt.wait()
-        log.info("Successful WiFi connection event received!")
+        log.debug("Successful WiFi connection event received!")
         
         try:
-            log.info("Connecting to MQTT server...")
+            log.debug("Connecting to MQTT server...")
             await asyncio.sleep(0.1)
             client.connect()
             await asyncio.sleep(5)
@@ -173,7 +173,7 @@ async def mqtt_task(period = 1.0):
                 var.first_connect = False
                 publish_discovery(client)
             
-            log.info("Publishing data...")
+            log.info("Publishing data to MQTT server")
             if var.scd41_co2_detected is not None:
                 client.publish(BASE_TOPIC+"/co2_detected", str(var.scd41_co2_detected))
             if var.sensor_data.co2_scd41 is not None:
@@ -198,7 +198,7 @@ async def mqtt_task(period = 1.0):
                 client.publish(BASE_TOPIC+"/low_battery", str(low_battery))
                 
             await asyncio.sleep(0.1)
-            log.info("Disconnecting from MQTT server...")
+            log.debug("Disconnecting from MQTT server...")
             client.disconnect()
 
         except Exception as e:

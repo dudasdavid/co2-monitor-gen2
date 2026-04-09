@@ -22,7 +22,7 @@ async def idle_task(period = 1.0):
         var.system_data.total_heap = total / 1024
         var.system_data.used_heap = used / 1024
         
-        log.debug("[MEM] total:", int(total / 1024), "kB, free:", int(free / 1024), "kB, used:", int(used / 1024), "kB")
+        #log.debug("[MEM] total:", int(total / 1024), "kB, free:", int(free / 1024), "kB, used:", int(used / 1024), "kB")
         
         var.system_data.idle_task_timestamp = time.time()
         

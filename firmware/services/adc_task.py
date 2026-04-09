@@ -105,7 +105,7 @@ async def adc_task(period = 1.0):
 
     #Run
     while True:
-        log.debug("Task is running")
+        #log.debug("Task is running")
 
         raw_bat  = adc1.read_u16()
 
@@ -120,7 +120,7 @@ async def adc_task(period = 1.0):
         # Calculate percentage
         var.system_data.bat_percentage = lipo_voltage_to_percent(v_bat_f)
         
-        log.debug("Battery voltage:", v_bat_f, "V, Percentage:", var.system_data.bat_percentage, "%")
+        #log.debug("Battery voltage:", v_bat_f, "V, Percentage:", var.system_data.bat_percentage, "%")
     
         var.system_data.adc_task_timestamp = utime.time()
     

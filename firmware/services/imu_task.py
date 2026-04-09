@@ -24,10 +24,10 @@ async def imu_task(i2c_bus, period = 1.0):
         timestamp = imu.timestamp
         temp = imu.temperature
         
-        log.debug("Acc:", acc)
-        log.debug("Gyro:", gyro)
-        log.debug("Timestamp:", timestamp)
-        log.debug("Temp:", temp)
+        #log.debug("Acc:", acc)
+        #log.debug("Gyro:", gyro)
+        #log.debug("Timestamp:", timestamp)
+        #log.debug("Temp:", temp)
         
         var.sensor_data.temp_qmi8658c = temp
         var.sensor_data.acc_qmi8658c  = acc

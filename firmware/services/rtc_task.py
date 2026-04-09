@@ -78,14 +78,14 @@ async def rtc_task(i2c_bus, period = 1.0):
     while True:
         
         rtc_time = pcf85063.datetime()
-        log.debug(rtc_time)
+        #log.debug(rtc_time)
         
         var.system_data.time_rtc = rtc_time
         
-        log.debug("NTP time synchronized:", var.ntp_time_synchronized)
+        #log.debug("NTP time synchronized:", var.ntp_time_synchronized)
         if var.ntp_time_synchronized:
-            log.debug("RTC time:", var.system_data.time_rtc)
-            log.debug("NTP time:", time.localtime())
+            #log.debug("RTC time:", var.system_data.time_rtc)
+            #log.debug("NTP time:", time.localtime())
             if is_time_diff_over_threshold(time.localtime(), var.system_data.time_rtc, 60):
                 log.warning("RTC time needs to be updated from NTP time!")
                 log.warning("RTC time:", var.system_data.time_rtc)

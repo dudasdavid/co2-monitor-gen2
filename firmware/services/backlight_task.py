@@ -69,7 +69,7 @@ async def backlight_task(period = 1.0):
 
     #Run
     while True:
-        log.debug("Measured lux:", var.sensor_data.lux_veml7700)
+        #log.debug("Measured lux:", var.sensor_data.lux_veml7700)
         
         raw_level = _lux_to_level(var.sensor_data.lux_veml7700)
         # Exponential smoothing to avoid flicker (optional)
@@ -77,7 +77,7 @@ async def backlight_task(period = 1.0):
         _target_duty = _level_to_duty(_level)
         _duty = _slew_limit(_duty, _target_duty, max_step)
             
-        log.debug("Calculated duty [0-1000]:", _duty)
+        #log.debug("Calculated duty [0-1000]:", _duty)
         var.system_data.bl_duty_percent = int(_duty)
         
         pwm.duty_u16(int(_duty*65.535)) # calculate the 0...1000 range to 0...65535 (uint_16)

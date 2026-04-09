@@ -150,7 +150,7 @@ async def sensor_task(period = 1.0):
 
         try:
             lux = veml7700.read_lux()
-            log.debug("[VEML7700] Lux", lux)
+            #log.debug("[VEML7700] Lux", lux)
             
             if lux is not None:
                 lux_cal = 1.0 * lux - 0
@@ -164,9 +164,9 @@ async def sensor_task(period = 1.0):
             co2 = scd4x.co2
             temp = scd4x.temperature
             rh = scd4x.relative_humidity
-            log.debug("[SCD41] CO2:", co2)
-            log.debug("[SCD41] temperature:", temp)
-            log.debug("[SCD41] humidity:", rh)
+            #log.debug("[SCD41] CO2:", co2)
+            #log.debug("[SCD41] temperature:", temp)
+            #log.debug("[SCD41] humidity:", rh)
             var.sensor_data.co2_scd41 = co2 if co2 is not None else 0
             
             if temp is not None:
@@ -189,16 +189,16 @@ async def sensor_task(period = 1.0):
         if var.hw_variant == "spi" and i % 10 == 0:
             rtc_time = ds3231.datetime()
             rtc_temp = ds3231.temperature()
-            log.debug("DS3231 Time:", rtc_time)
-            log.debug("DS3231 Temperature:", rtc_temp)
+            #log.debug("DS3231 Time:", rtc_time)
+            #log.debug("DS3231 Temperature:", rtc_temp)
             
             var.system_data.time_rtc = rtc_time
             var.sensor_data.temp_ds3231 = rtc_temp
             
-            log.debug("NTP time synchronized:", var.ntp_time_synchronized)
+            #log.debug("NTP time synchronized:", var.ntp_time_synchronized)
             if var.ntp_time_synchronized:
-                log.debug("RTC time:", var.system_data.time_rtc)
-                log.debug("NTP time:", time.localtime())
+                #log.debug("RTC time:", var.system_data.time_rtc)
+                #log.debug("NTP time:", time.localtime())
                 if is_time_diff_over_threshold(time.localtime(), var.system_data.time_rtc, 60):
                     log.warning("RTC time needs to be updated from NTP time!")
                     log.warning("RTC time:", var.system_data.time_rtc)

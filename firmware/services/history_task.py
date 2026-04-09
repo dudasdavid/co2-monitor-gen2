@@ -55,8 +55,8 @@ async def history_task(period=1.0):
                 overflow = len(var.scd41_co2_history) - var.CO2_HISTORY_MAX
                 del var.scd41_co2_history[0:overflow]
 
-            log.debug("Added CO2 history item:", avg,
-                      "len:", len(var.scd41_co2_history))
+            #log.debug("Added CO2 history item:", avg,
+            #          "len:", len(var.scd41_co2_history))
 
             # reset window
             window_start = now
