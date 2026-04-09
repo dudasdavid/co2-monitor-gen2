@@ -202,7 +202,7 @@ def _append_sensor_row(path, limit_rows):
         
         sd_card_recovery()
 
-def _load_co2_history_from_log(path):
+async def _load_co2_history_from_log(path, yield_every=50):
     """
     Read /sd/sensor_logs.csv and rebuild var.scd41_co2_history
     from all entries in the last 24 hours.
@@ -211,79 +211,99 @@ def _load_co2_history_from_log(path):
     """
     try:
         f = open(path + ".csv", "r")
-        lines = f.readlines()
-        f.close()
     except OSError:
         log.warning("No log file found to restore CO2 history from:", path + ".csv")
         return
 
-    if len(lines) <= 1:
-        log.info("Log file has no data rows, history not restored")
-        return
-
-    now_tuple = localtime_with_offset()
-    log.debug("RTC timestamp:", now_tuple)
     try:
-        now_ts = time.mktime(now_tuple)
-    except Exception as e:
-        log.error("mktime not available / failed, cannot restore history:", e)
-        return
+        # Skip header
+        header = f.readline()
+        if not header:
+            log.warning("Log file empty, history not restored")
+            return
 
-    one_day = 24 * 60 * 60
-    min_ts = now_ts - one_day
-
-    entries = []  # list of (ts_seconds, co2_int)
-
-    for line in lines[1:]:
-        line = line.strip()
-        if not line:
-            continue
-
-        parts = line.split(",")
-        if len(parts) < 4:
-            continue
-
-        ts_str = parts[0]      # 'YYYY-MM-DD HH:MM:SS'
-        co2_str = parts[4]     # co2 column
-
-        ts_tuple = _parse_timestamp(ts_str)
-        log.debug("Log timestamp:", ts_tuple)
-        if ts_tuple is None:
-            continue
-
+        now_tuple = localtime_with_offset()
+        log.debug("RTC timestamp:", now_tuple)
+        
         try:
-            ts = time.mktime(ts_tuple)
-        except:
-            continue
+            now_ts = time.mktime(now_tuple)
+        except Exception as e:
+            log.error("mktime not available / failed, cannot restore history:", e)
+            return
 
-        # Only keep last 24h
-        if ts < min_ts or ts > now_ts:
-            continue
+        one_day = 24 * 60 * 60
+        min_ts = now_ts - one_day
 
-        try:
-            co2 = int(float(co2_str))
-        except:
-            continue
+        entries = []  # list of (ts_seconds, co2_int)
+        line_counter = 0
 
-        entries.append((ts, co2))
+        while True:
+            line = f.readline()
+            if not line:
+                break
 
-    if not entries:
-        log.info("No recent entries (last 24h) for CO2 history")
-        return
+            line = line.strip()
+            if not line:
+                continue
 
-    # Ensure chronological order
-    entries.sort(key=lambda x: x[0])
+            parts = line.split(",")
+            if len(parts) < 5:
+                continue
 
-    # Build simple list of co2 values
-    history = [co2 for _, co2 in entries]
+            ts_str = parts[0]      # 'YYYY-MM-DD HH:MM:SS'
+            co2_str = parts[4]     # co2 column
 
-    # Respect max history length if defined
-    max_len = getattr(var, "CO2_HISTORY_MAX", None)
-    if max_len is not None and len(history) > max_len:
-        history = history[-max_len:]
+            ts_tuple = _parse_timestamp(ts_str)
+            #log.debug("Log timestamp:", ts_tuple)
+            if ts_tuple is None:
+                continue
 
-    var.scd41_co2_history = history
-    log.info("Restored CO2 history from log, length:", len(history))
+            try:
+                ts = time.mktime(ts_tuple)
+            except:
+                continue
+
+            # Only keep last 24h
+            if ts < min_ts or ts > now_ts:
+                line_counter += 1
+                if line_counter % yield_every == 0:
+                    await asyncio.sleep_ms(0)
+                continue
+
+            try:
+                co2 = int(float(co2_str))
+            except Exception:
+                line_counter += 1
+                if line_counter % yield_every == 0:
+                    await asyncio.sleep_ms(0)
+                continue
+
+            entries.append((ts, co2))
+
+            line_counter += 1
+            if line_counter % yield_every == 0:
+                await asyncio.sleep_ms(0)
+
+        if not entries:
+            log.warning("No recent entries (last 24h) for CO2 history")
+            return
+
+        # Ensure chronological order
+        entries.sort(key=lambda x: x[0])
+
+        # Build simple list of co2 values
+        history = [co2 for _, co2 in entries]
+
+        # Respect max history length if defined
+        max_len = getattr(var, "CO2_HISTORY_MAX", None)
+        if max_len is not None and len(history) > max_len:
+            history = history[-max_len:]
+
+        var.scd41_co2_history = history
+        log.info("Restored CO2 history from log, length:", len(history))
+        
+    finally:
+        f.close()
 
 async def storage_task(period = 1.0):
     #Init
@@ -316,7 +336,7 @@ async def storage_task(period = 1.0):
         
     log_file_path = "/log/sensor_logs"
     _ensure_log_file(log_file_path)
-    _load_co2_history_from_log(log_file_path)
+    await _load_co2_history_from_log(log_file_path)
 
     var.history_loaded = True
 
