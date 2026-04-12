@@ -6,6 +6,17 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
+# 128-step breathing table, values 1..100
+BREATH_TABLE = [
+  50,52,55,57,60,62,65,67,70,72,75,77,79,82,84,86,
+  88,90,92,94,95,97,98,99,100,100,100,100,99,98,97,95,
+  94,92,90,88,86,84,82,79,77,75,72,70,67,65,62,60,
+  57,55,52,50,47,45,42,40,37,35,32,30,28,25,23,21,
+  19,17,15,13,11,9,8,6,5,3,2,1,0,0,0,0,
+  1,2,3,5,6,8,9,11,13,15,17,19,21,23,25,28,
+  30,32,35,37,40,42,45,47
+]
+
 def convert_hsv2rgb(h,s,v):
     """
     Convert HSV (Hue 0–360, Saturation 0–100, Value 0–100)
@@ -52,6 +63,7 @@ async def led_task(period = 1.0):
     phase = 0
     v_breath = 0
     dir = 1
+    idx = 0
     #Run
     while True:
         # Welcome screen is not registered as normal screens so at startup len is 0
@@ -67,14 +79,11 @@ async def led_task(period = 1.0):
                     
                 s = 100
                 
-                
-                v_breath += dir * 1
-                if v_breath > 100:
-                    v_breath = 100
-                    dir = -1
-                elif v_breath < 1:
-                    v_breath = 1
-                    dir = 1
+                # LUT sinusoidal breathing animation
+                v_breath = BREATH_TABLE[idx]
+                idx += 1
+                if idx >= len(BREATH_TABLE):
+                    idx = 0
                     
                 # Ambient lux based LED ring intensity calculation
                 lux = var.sensor_data.lux_veml7700
@@ -124,13 +133,11 @@ async def led_task(period = 1.0):
                                    
                 s = 100
                 
-                v_breath += dir * 1
-                if v_breath > 100:
-                    v_breath = 100
-                    dir = -1
-                elif v_breath < 1:
-                    v_breath = 1
-                    dir = 1
+                # LUT sinusoidal breathing animation
+                v_breath = BREATH_TABLE[idx]
+                idx += 1
+                if idx >= len(BREATH_TABLE):
+                    idx = 0
                     
                 # Ambient lux based LED ring intensity calculation
                 lux = var.sensor_data.lux_veml7700
