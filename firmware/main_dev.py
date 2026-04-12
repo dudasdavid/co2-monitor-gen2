@@ -224,7 +224,6 @@ async def main():
     asyncio.create_task(audio_task())
     await asyncio.sleep(6)
     asyncio.create_task(idle_task(5.0))
-    asyncio.create_task(led_task(0.03))
     asyncio.create_task(backlight_task(0.1))
     asyncio.create_task(adc_task(1))
 
@@ -234,6 +233,7 @@ async def main():
         asyncio.create_task(rtc_task(i2c_bus, 2))
     elif var.hw_variant == "spi":
         asyncio.create_task(io_task(0.5))
+        pass
 
     # Start event handler after IO started
     asyncio.create_task(event_handler_task())
@@ -249,7 +249,6 @@ async def main():
     
 
     # 3) start UI  
-    #top_layer = lv.layer_top()
     ui.create_sensor_table(alt = True)
     ui.create_co2_screen()
     ui.create_co2_chart_screen()
@@ -258,7 +257,6 @@ async def main():
     ui.create_ap_screen(alt = True)
     #ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
-    #ui.create_status_bar(top_layer)
 
     log.info("Free RAM after UI:", int(gc.mem_free() / 1024), "kB")
 
