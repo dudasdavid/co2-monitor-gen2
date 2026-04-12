@@ -126,10 +126,13 @@ def create_battery_widget(parent, x, y, font=None):
     charge.add_flag(lv.obj.FLAG.HIDDEN)
     charge.set_style_text_font(lv.font_montserrat_12, 0)
 
+    # Counter to flash charging symbol
+    charge_flash_counter = 0
     # -----------------------------
     # Update logic
     # -----------------------------
     def update():
+        nonlocal charge_flash_counter
         
         pct = int(var.system_data.bat_percentage)
         charging = bool(var.system_data.usb_connected)
@@ -157,12 +160,14 @@ def create_battery_widget(parent, x, y, font=None):
         icon.set_style_text_color(color, 0)
 
         # Charging icon
-        if charging:
+        if charging and charge_flash_counter % 2 == 0:
             charge.remove_flag(lv.obj.FLAG.HIDDEN)
             charge_shadow.remove_flag(lv.obj.FLAG.HIDDEN)
         else:
             charge.add_flag(lv.obj.FLAG.HIDDEN)
             charge_shadow.add_flag(lv.obj.FLAG.HIDDEN)
+            
+        charge_flash_counter += 1
 
     return {
         "root": root,
@@ -863,7 +868,7 @@ def create_co2_screen(alt=False):
     # Battery widget
     # -----------------------------
     bat = create_battery_widget(scr, 0, 87, font = lv.font_montserrat_16)
-
+    
     # -----------------------------
     # Breathing animation
     # -----------------------------
@@ -884,7 +889,7 @@ def create_co2_screen(alt=False):
         ring_g1.set_style_arc_opa(55 + x // 1, lv.PART.INDICATOR)
         ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
 
-    lv.timer_create(glow_timer_cb, 1000, None)
+    lv.timer_create(glow_timer_cb, 2000, None)
 
     # -----------------------------
     # CO2 update
@@ -909,7 +914,7 @@ def create_co2_screen(alt=False):
         
         bat["update"]()
 
-    lv.timer_create(set_co2_cb, 2000, None)
+    lv.timer_create(set_co2_cb, 3000, None)
 
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
