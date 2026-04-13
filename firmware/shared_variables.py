@@ -6,6 +6,8 @@ hw_variant = None # Can be "i80" or "spi"
 debug = False
 serial_number = 0
 hostname = "CO2-Sensor-SNr"+str(serial_number)
+temp_cal_A = 1
+temp_cal_B = 0
 
 class SimpleQueue:
     def __init__(self):

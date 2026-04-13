@@ -170,7 +170,7 @@ async def sensor_task(period = 1.0):
             var.sensor_data.co2_scd41 = co2 if co2 is not None else 0
             
             if temp is not None:
-                temp_cal = 1 * temp - 0
+                temp_cal = var.temp_cal_A * temp - var.temp_cal_B
                 var.sensor_data.temp_scd41 = temp_cal
             else:
                 temp_cal = 0.69
