@@ -174,6 +174,12 @@ async def led_task(period = 1.0):
                     
                 np.write() # write data to all pixels
                 
+            elif var.selected_alt and var.screen_names_alt[var.current_idx_alt] in ["Roll"]:
+                for i in range(0, len(np)):
+                    np[i] = (30,30,30)
+                    
+                np.write() # write data to all pixels
+                await asyncio.sleep(0.5)
             
             else:
                 for i in range(0, len(np)):
