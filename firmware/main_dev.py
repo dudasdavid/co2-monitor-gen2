@@ -25,6 +25,7 @@ from services.audio_task import audio_task
 from services.event_handler_task import event_handler_task
 from services.ap_auto_disable_task import ap_auto_disable_task
 from services.mqtt_task import mqtt_task
+from services.display_handler_task import display_handler_task
 
 from logger import Logger
 
@@ -71,7 +72,7 @@ _SDA = const(8)
 _I2C_FREQ = const(100000)
 _TP_RST = const(0)
 
-# Display orientation table
+# Display orientation table constants to fix rotations
 _MADCTL_MV = const(0x20)  # 0=Normal, 1=Row/column exchange
 _MADCTL_MX = const(0x40)  # 0=Left to Right, 1=Right to Left
 _MADCTL_MY = const(0x80)  # 0=Top to Bottom, 1=Bottom to Top
@@ -116,17 +117,14 @@ def init_display_i80():
         rgb565_byte_swap=True
     )
     
-    print(display._ORIENTATION_TABLE)
-    
+    # Update orientation table that matches the screen
     display._ORIENTATION_TABLE = (
         0,
         _MADCTL_MY | _MADCTL_MV,
         _MADCTL_MY | _MADCTL_MX,
         _MADCTL_MX | _MADCTL_MV
     )
-    
-    print(display._ORIENTATION_TABLE)
-    
+        
     # Initialize display
     display.set_power(True)
     display.init()
@@ -191,8 +189,7 @@ def init_display_spi():
         rgb565_byte_swap=True
     )
 
-    print(display._ORIENTATION_TABLE)
-    
+    # Update orientation table that matches the screen
     display._ORIENTATION_TABLE = (
         0,
         _MADCTL_MY | _MADCTL_MV,
@@ -200,8 +197,6 @@ def init_display_spi():
         _MADCTL_MX | _MADCTL_MV
     )
     
-    print(display._ORIENTATION_TABLE)
-
     # Initialize display
     display.set_power(True)
     display.init()
@@ -262,6 +257,7 @@ async def main():
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
         asyncio.create_task(imu_task(i2c_bus, 0.15))
         asyncio.create_task(rtc_task(i2c_bus, 2))
+        asyncio.create_task(display_handler_task(display, 0.3))
     elif var.hw_variant == "spi":
         asyncio.create_task(io_task(0.5))
         pass

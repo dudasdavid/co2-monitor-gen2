@@ -99,6 +99,7 @@ class SystemData:
         self.io_task_timestamp = 0
         self.io_expander_task_timestamp = 0
         self.imu_task_timestamp = 0
+        self.display_rotation_task_timestamp = 0
 
 sensor_data = SensorData()
 system_data = SystemData()
