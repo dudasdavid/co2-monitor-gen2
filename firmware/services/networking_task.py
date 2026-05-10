@@ -347,7 +347,7 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
     wlan.active(False)
 
     # Give some time for other tasks to load before dumping networking stack onto them
-    await asyncio.sleep(10)
+    await asyncio.sleep(30)
 
     #Run
     while True:
@@ -379,6 +379,19 @@ async def networking_task(period_on = 10.0, period_off = 50.0):
                 await asyncio.sleep_ms(200)
 
             continue  # go back to top of loop (handles disconnect/off timing there)
+        
+        if var.wifi_disabled:
+            log.info("WiFi is disabled by var.wifi_disabled variable")
+            
+            # Off period (interruptible by AP request)
+            t1 = _now_ms()
+            while _ms_since(t1, _now_ms()) < int(period_off * 1000):
+                var.sleep_till_next_connection = (period_off * 1000 - _ms_since(t1, _now_ms())) / 1000.0
+                if var.ap_request:
+                    break
+                await asyncio.sleep_ms(200)
+            
+            continue
         
         # --- NORMAL STA DUTY-CYCLE MODE ---
         log.debug("Initiating WiFi connection...")

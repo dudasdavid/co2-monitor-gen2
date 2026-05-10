@@ -120,6 +120,7 @@ except:
     print("TZ offset cannot be read from persistent_config.py!")
     TZ_OFFSET = 0
 
+wifi_disabled = False
 ap_request = False
 ap_enabled = False
 ap_disable_timer = 69
