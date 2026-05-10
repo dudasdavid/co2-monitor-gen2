@@ -26,6 +26,7 @@ from services.event_handler_task import event_handler_task
 from services.ap_auto_disable_task import ap_auto_disable_task
 from services.mqtt_task import mqtt_task
 from services.display_handler_task import display_handler_task
+from services.asyncio_jitter_monitor import asyncio_jitter_monitor
 
 from logger import Logger
 
@@ -252,6 +253,8 @@ async def main():
     asyncio.create_task(idle_task(5.0))
     asyncio.create_task(backlight_task(0.1))
     asyncio.create_task(adc_task(1))
+    # Jitter monitor is running with 50ms, enable it only for debugging
+    #asyncio.create_task(asyncio_jitter_monitor(50))
 
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
