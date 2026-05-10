@@ -122,7 +122,7 @@ def _ensure_log_file(path):
     except Exception as e:
         log.error("Failed to create log file:", csv, e)
 
-def _append_sensor_row(path, limit_rows):
+async def _append_sensor_row(path, limit_rows, yield_every=50):
     """
     Append one sensor row and trim to last `limit_rows` data lines.
     """
@@ -177,13 +177,20 @@ def _append_sensor_row(path, limit_rows):
             log.warning("Log length is longer than", limit_rows, ", log size was decreased to", len(data_lines))
 
         # Write everything back
+        line_counter = 0
         f = open(path + ".tmp", "w")
         f.write(header)
         for l in data_lines:
             f.write(l)
+            
+            line_counter += 1
+            if line_counter % yield_every == 0:
+                await asyncio.sleep_ms(10)
+            
+            
         f.close()
 
-        log.debug("Log row created, total rows:", len(data_lines))
+        log.info("Log row created, total rows:", len(data_lines))
         
         os.rename(path + ".csv", path + ".bak")
         
@@ -202,7 +209,7 @@ def _append_sensor_row(path, limit_rows):
         
         sd_card_recovery()
 
-async def _load_co2_history_from_log(path, yield_every=50):
+async def _load_co2_history_from_log(path, yield_every=20):
     """
     Read /sd/sensor_logs.csv and rebuild var.scd41_co2_history
     from all entries in the last 24 hours.
@@ -250,6 +257,11 @@ async def _load_co2_history_from_log(path, yield_every=50):
             if len(parts) < 5:
                 continue
 
+            # Yield here during file reading to make sure other asyncio tasks can run
+            line_counter += 1
+            if line_counter % yield_every == 0:
+                await asyncio.sleep_ms(50)
+
             ts_str = parts[0]      # 'YYYY-MM-DD HH:MM:SS'
             co2_str = parts[4]     # co2 column
 
@@ -265,24 +277,14 @@ async def _load_co2_history_from_log(path, yield_every=50):
 
             # Only keep last 24h
             if ts < min_ts or ts > now_ts:
-                line_counter += 1
-                if line_counter % yield_every == 0:
-                    await asyncio.sleep_ms(0)
                 continue
 
             try:
                 co2 = int(float(co2_str))
             except Exception:
-                line_counter += 1
-                if line_counter % yield_every == 0:
-                    await asyncio.sleep_ms(0)
                 continue
 
             entries.append((ts, co2))
-
-            line_counter += 1
-            if line_counter % yield_every == 0:
-                await asyncio.sleep_ms(0)
 
         if not entries:
             log.warning("No recent entries (last 24h) for CO2 history")
@@ -354,7 +356,7 @@ async def storage_task(period = 1.0):
         elapsed += period
         if elapsed >= save_interval_s:
             elapsed = 0.0
-            _append_sensor_row(log_file_path, MAX_ROWS)
+            await _append_sensor_row(log_file_path, MAX_ROWS)
 
         var.system_data.storage_task_timestamp = time.time()
 
