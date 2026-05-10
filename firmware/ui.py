@@ -76,7 +76,18 @@ def prev_screen(audio_feedback=True):
 def swipe_event_cb(e):
     lv = init()
 
-    if e.get_code() != lv.EVENT.GESTURE:
+    if e.get_code() == lv.EVENT.GESTURE:
+        pass
+    elif e.get_code() == lv.EVENT.LONG_PRESSED:
+        #print("Long press received")
+        return
+    elif e.get_code() == lv.EVENT.DOUBLE_CLICKED:
+        #print("Double click received")
+        return
+    elif e.get_code() == lv.EVENT.RELEASED:
+        #print("Released received")
+        return
+    else:
         return
 
     indev = var.indev
@@ -84,7 +95,7 @@ def swipe_event_cb(e):
         return
 
     d = indev.get_gesture_dir()
-
+    
     if d == lv.DIR.LEFT:
         next_screen()
     elif d == lv.DIR.RIGHT:
@@ -951,14 +962,14 @@ def create_co2_screen(alt=False):
         return a
 
     # Inner glow layers
-    ring_g1 = make_ring(250, 13, lv.color_hex(0x00FF55), 55)
-    ring_g2 = make_ring(242, 19, lv.color_hex(0x00FF55), 24)
+    ring_g1 = make_ring(232, 8, lv.color_hex(0x00FF55), 45)
+    #ring_g2 = make_ring(210, 6, lv.color_hex(0x00FF55), 24)
 
     # main sharp ring
     ring = lv.arc(scr)
     ring.remove_style_all()
     ring.remove_flag(lv.obj.FLAG.CLICKABLE)
-    ring.set_size(256, 256)
+    ring.set_size(240, 240)
     ring.align(lv.ALIGN.CENTER, 0, 0)
     ring.set_rotation(270)
     ring.set_bg_angles(0, 360)
@@ -966,11 +977,11 @@ def create_co2_screen(alt=False):
     ring.set_value(100)
     ring.set_style_pad_all(0, 0)
 
-    ring.set_style_arc_width(10, lv.PART.MAIN)
+    ring.set_style_arc_width(3, lv.PART.MAIN)
     ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
 
-    ring.set_style_arc_width(10, lv.PART.INDICATOR)
+    ring.set_style_arc_width(3, lv.PART.INDICATOR)
     ring.set_style_arc_color(lv.color_hex(0x00FF55), lv.PART.INDICATOR)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
 
@@ -1024,10 +1035,10 @@ def create_co2_screen(alt=False):
 
         glow_state["opa"] = x
 
-        ring_g1.set_style_arc_opa(55 + x // 1, lv.PART.INDICATOR)
-        ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
+        ring_g1.set_style_arc_opa(15 + x // 1, lv.PART.INDICATOR)
+        #ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
 
-    lv.timer_create(glow_timer_cb, 2000, None)
+    lv.timer_create(glow_timer_cb, 3000, None)
 
     # -----------------------------
     # CO2 update
@@ -1038,7 +1049,7 @@ def create_co2_screen(alt=False):
         co2_label.set_text(txt)
 
         if value < 1000:
-            color = lv.color_hex(0x55FF00)
+            color = lv.color_hex(0x00FF55)
         elif value < 1500:
             color = lv.color_hex(0x00D0FF)
         else:
@@ -1048,11 +1059,11 @@ def create_co2_screen(alt=False):
         ppm_label.set_style_text_color(color, 0)
 
         ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
-        ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
+        #ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
         
         bat["update"]()
 
-    lv.timer_create(set_co2_cb, 3000, None)
+    lv.timer_create(set_co2_cb, 2000, None)
 
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
@@ -1361,6 +1372,7 @@ def create_co2_chart_screen(alt=False):
         
     lv.timer_create(update_co2_chart, 3000, None)
     
+    # Faded area below chart looks great but kills asyncio tasks
     #chart.add_event_cb(co2_chart_draw_event_cb, lv.EVENT.DRAW_TASK_ADDED, None)
     #chart.add_flag(lv.obj.FLAG.SEND_DRAW_TASK_EVENTS)
 
