@@ -57,6 +57,7 @@ class SensorData:
         self.lux_veml7700 = 269.69
         self.acc_qmi8658c = (0,0,0)
         self.gyro_qmi8658c = (0,0,0)
+        self.rpy = (0,0,0)
         self.timestamp_qmi8658c = 69
 
 class SystemData:
