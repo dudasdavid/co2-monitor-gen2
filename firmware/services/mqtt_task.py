@@ -173,7 +173,6 @@ async def mqtt_task(period = 1.0):
                 var.first_connect = False
                 publish_discovery(client)
             
-            log.info("Publishing data to MQTT server")
             if var.scd41_co2_detected is not None:
                 client.publish(BASE_TOPIC+"/co2_detected", str(var.scd41_co2_detected))
             if var.sensor_data.co2_scd41 is not None:
@@ -196,6 +195,8 @@ async def mqtt_task(period = 1.0):
                 if var.system_data.bat_percentage < 20:
                     low_battery = 1
                 client.publish(BASE_TOPIC+"/low_battery", str(low_battery))
+                
+            log.info("Successfuly published data to MQTT server")
                 
             await asyncio.sleep(0.1)
             log.debug("Disconnecting from MQTT server...")
