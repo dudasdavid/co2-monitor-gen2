@@ -71,6 +71,11 @@ _SDA = const(8)
 _I2C_FREQ = const(100000)
 _TP_RST = const(0)
 
+# Display orientation table
+_MADCTL_MV = const(0x20)  # 0=Normal, 1=Row/column exchange
+_MADCTL_MX = const(0x40)  # 0=Left to Right, 1=Right to Left
+_MADCTL_MY = const(0x80)  # 0=Top to Bottom, 1=Bottom to Top
+
 def init_display_i80():
     # Initialize LVGL
     lv = init()
@@ -110,7 +115,18 @@ def init_display_i80():
         color_space=lv.COLOR_FORMAT.RGB565,
         rgb565_byte_swap=True
     )
-
+    
+    print(display._ORIENTATION_TABLE)
+    
+    display._ORIENTATION_TABLE = (
+        0,
+        _MADCTL_MY | _MADCTL_MV,
+        _MADCTL_MY | _MADCTL_MX,
+        _MADCTL_MX | _MADCTL_MV
+    )
+    
+    print(display._ORIENTATION_TABLE)
+    
     # Initialize display
     display.set_power(True)
     display.init()
@@ -131,6 +147,8 @@ def init_display_i80():
 
     # No idea what is exactly this
     th = task_handler.TaskHandler()
+    
+    return display
 
 def init_display_spi():
     # Initialize LVGL
@@ -173,6 +191,17 @@ def init_display_spi():
         rgb565_byte_swap=True
     )
 
+    print(display._ORIENTATION_TABLE)
+    
+    display._ORIENTATION_TABLE = (
+        0,
+        _MADCTL_MY | _MADCTL_MV,
+        _MADCTL_MY | _MADCTL_MX,
+        _MADCTL_MX | _MADCTL_MV
+    )
+    
+    print(display._ORIENTATION_TABLE)
+
     # Initialize display
     display.set_power(True)
     display.init()
@@ -192,6 +221,8 @@ def init_display_spi():
 
     # No idea what is exactly this
     th = task_handler.TaskHandler()
+    
+    return display
 
 import ui
 
@@ -204,9 +235,9 @@ async def main():
     
     # 1) initialize display
     if var.hw_variant == "i80":
-        init_display_i80()
+        display = init_display_i80()
     elif var.hw_variant == "spi":
-        init_display_spi()
+        display = init_display_spi()
     # Else is not needed because valid hw variants are already checked in main.py
     
     lv = init()
@@ -262,7 +293,16 @@ async def main():
 
     while True:     
               
-        await asyncio.sleep(1)
+        await asyncio.sleep(10)
+        '''
+        display.set_rotation(lv.DISPLAY_ROTATION._90)
+        await asyncio.sleep(10)
+        display.set_rotation(lv.DISPLAY_ROTATION._180)
+        await asyncio.sleep(10)
+        display.set_rotation(lv.DISPLAY_ROTATION._270)
+        await asyncio.sleep(10)
+        display.set_rotation(lv.DISPLAY_ROTATION._0)
+        '''
 
 if __name__ == "__main__":
     try:
