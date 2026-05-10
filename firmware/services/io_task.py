@@ -8,8 +8,8 @@ import shared_variables as var
 
 log = Logger("io", debug_enabled=False)   
 
-DEBOUNCE_MS = const(40)
-LONG_PRESS_MS = const(800)
+DEBOUNCE_MS = const(20)
+LONG_PRESS_MS = const(1000)
 
 EVENT_SHORT = const(1)
 EVENT_LONG  = const(2)
