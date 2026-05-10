@@ -2,6 +2,7 @@ from lv_port import init
 from math import ceil, sin
 import time
 import random
+import math
 
 # ---- Global variables ----
 import shared_variables as var
@@ -316,6 +317,143 @@ def create_dummy_screen(alt=False):
     
     #lv.screen_load(scr)
     
+    return scr
+
+def create_roll_indicator_screen(alt=False):
+
+    lv = init()
+
+    scr = lv.obj()
+
+    # Black background
+    scr.set_style_bg_color(lv.color_hex(0x000000), 0)
+    scr.set_style_bg_opa(lv.OPA.COVER, 0)
+
+    # Screen constants
+    CENTER_X = 120
+    CENTER_Y = 120
+    LINE_LEN = 220
+
+    # How far the pitch dot can move from center
+    PITCH_RANGE_PX = 90
+    DOT_SIZE = 24
+
+    # =========================
+    # Horizon line
+    # =========================
+
+    line = lv.line(scr)
+
+    style = lv.style_t()
+    style.init()
+
+    style.set_line_color(lv.color_hex(0x00FF00))
+    style.set_line_width(3)
+
+    line.add_style(style, 0)
+
+    points = [
+        {"x": 0, "y": 0},
+        {"x": 0, "y": 0},
+    ]
+
+    line.set_points(points, 2)
+
+    # =========================
+    # Pitch indicator dot
+    # =========================
+    pitch_dot = lv.obj(scr)
+    pitch_dot.set_size(DOT_SIZE, DOT_SIZE)
+    pitch_dot.set_style_radius(DOT_SIZE // 2, 0)
+    pitch_dot.set_style_bg_color(lv.color_hex(0x0000FF), 0)
+    pitch_dot.set_style_bg_opa(lv.OPA.COVER, 0)
+    pitch_dot.set_style_border_width(0, 0)
+    pitch_dot.set_style_outline_width(0, 0)
+    pitch_dot.set_style_shadow_width(0, 0)
+    pitch_dot.set_style_pad_all(0, 0)
+
+    # =========================
+    # Roll label
+    # =========================
+
+    roll_lbl = lv.label(scr)
+    roll_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    roll_lbl.align(lv.ALIGN.TOP_MID, 0, 15)
+
+    # =========================
+    # Pitch label
+    # =========================
+
+    pitch_lbl = lv.label(scr)
+    pitch_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    pitch_lbl.align(lv.ALIGN.BOTTOM_MID, 0, -15)
+
+    # =========================
+    # Update function
+    # =========================
+
+    def update_screen():
+
+        roll = var.sensor_data.rpy[0]
+        pitch = var.sensor_data.rpy[1]
+
+        # -------- Roll horizon line --------
+        angle_rad = math.radians(roll)
+
+        half_len = LINE_LEN // 2
+
+        dx = int(math.cos(angle_rad) * half_len)
+        dy = int(math.sin(angle_rad) * half_len)
+
+        points[0]["x"] = CENTER_X - dx
+        points[0]["y"] = CENTER_Y - dy
+
+        points[1]["x"] = CENTER_X + dx
+        points[1]["y"] = CENTER_Y + dy
+
+        line.set_points(points, 2)
+
+        # -------- Pitch dot --------
+        # Clamp pitch to -90..90
+        if pitch > 90:
+            pitch_clamped = 90
+        elif pitch < -90:
+            pitch_clamped = -90
+        else:
+            pitch_clamped = pitch
+
+        # +90 moves up, -90 moves down
+        dot_y = CENTER_Y - int((pitch_clamped / 90.0) * PITCH_RANGE_PX)
+        pitch_dot.set_pos(
+            CENTER_X - DOT_SIZE // 2,
+            dot_y - DOT_SIZE // 2
+        )
+
+        # -------- Labels --------
+        roll_lbl.set_text("ROLL: %.1f°" % roll)
+        pitch_lbl.set_text("PITCH: %.1f°" % pitch)
+
+    # Initial draw
+    update_screen()
+
+    # Periodic update timer
+    def timer_cb(timer):
+        update_screen()
+
+    lv.timer_create(timer_cb, 200, None)
+
+    # Swipe gestures
+    scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
+
+    screen_name = "Roll"
+
+    if not alt:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
+    else:
+        var.screens_alt.append(scr)
+        var.screen_names_alt.append(screen_name)
+
     return scr
 
 def create_sensor_screen(alt=False):

@@ -260,7 +260,7 @@ async def main():
 
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
-        asyncio.create_task(imu_task(i2c_bus, 0.5))
+        asyncio.create_task(imu_task(i2c_bus, 0.15))
         asyncio.create_task(rtc_task(i2c_bus, 2))
     elif var.hw_variant == "spi":
         asyncio.create_task(io_task(0.5))
@@ -286,6 +286,7 @@ async def main():
     ui.create_sensor_screen()
     ui.create_timezone_screen(alt = True)
     ui.create_ap_screen(alt = True)
+    ui.create_roll_indicator_screen(alt = True)
     #ui.create_dummy_screen()
     ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
 
