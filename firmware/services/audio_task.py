@@ -1,6 +1,5 @@
 import uasyncio as asyncio
 from machine import Pin, I2S
-import gc
 from logger import Logger
 import time
 import struct
@@ -68,7 +67,7 @@ async def play_pcm(pcm, tail = 0):
         bits=16,         # All samples are 16-bit PCM
         format=I2S.MONO, # All samples are MONO
         rate=8000,       # All samples are 8kHz
-        ibuf=3000
+        ibuf=4200
     )
     
     sw = asyncio.StreamWriter(audio)

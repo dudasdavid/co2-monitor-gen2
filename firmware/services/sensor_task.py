@@ -123,8 +123,8 @@ async def sensor_task(period = 1.0):
     while True:
         
         i+=1
-        # Only scan devices in every 10th loop
-        if i % 10 == 0:
+        # Only scan devices in every 20th loop
+        if i % 20 == 0:
             devices = i2c1_bus.scan()
             var.system_data.i2c_devices = devices
             
@@ -151,6 +151,7 @@ async def sensor_task(period = 1.0):
         try:
             lux = veml7700.read_lux()
             #log.debug("[VEML7700] Lux", lux)
+            await asyncio.sleep_ms(1)
             
             if lux is not None:
                 lux_cal = 1.0 * lux - 0
@@ -162,8 +163,11 @@ async def sensor_task(period = 1.0):
         
         try:
             co2 = scd4x.co2
+            await asyncio.sleep_ms(1)
             temp = scd4x.temperature
+            await asyncio.sleep_ms(1)
             rh = scd4x.relative_humidity
+            await asyncio.sleep_ms(1)
             #log.debug("[SCD41] CO2:", co2)
             #log.debug("[SCD41] temperature:", temp)
             #log.debug("[SCD41] humidity:", rh)
@@ -188,7 +192,9 @@ async def sensor_task(period = 1.0):
 
         if var.hw_variant == "spi" and i % 10 == 0:
             rtc_time = ds3231.datetime()
+            await asyncio.sleep_ms(1)
             rtc_temp = ds3231.temperature()
+            await asyncio.sleep_ms(1)
             #log.debug("DS3231 Time:", rtc_time)
             #log.debug("DS3231 Temperature:", rtc_temp)
             

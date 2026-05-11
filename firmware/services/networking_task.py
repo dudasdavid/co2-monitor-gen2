@@ -5,7 +5,7 @@ import socket
 import ntptime
 #from my_wifi import SSID, PASSWORD
 import sys
-import gc
+#import gc
 import machine
 
 def load_wifi_creds():
@@ -324,7 +324,7 @@ def ap_start(ap):
 def ap_stop(ap):
     log.info("Disabling access point...")
     await asyncio.sleep_ms(100)
-    gc.collect()
+    #gc.collect()
     
     try:
         ap.active(False)
@@ -333,7 +333,7 @@ def ap_stop(ap):
         
     # Give time after stop too
     await asyncio.sleep_ms(200)
-    gc.collect()
+    #gc.collect()
     var.ap_enabled = False
 
 

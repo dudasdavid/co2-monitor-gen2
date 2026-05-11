@@ -152,10 +152,13 @@ async def imu_task(i2c_bus, period = 1.0):
     #Run
     while True:
         
-        acc = imu._get_accelerometer()
         gyro = imu._get_gyrometer()
+        await asyncio.sleep_ms(1)
         timestamp = imu.timestamp
+        await asyncio.sleep_ms(1)
         temp = imu.temperature
+        await asyncio.sleep_ms(1)
+        acc = imu._get_accelerometer()
         
         #log.debug("Acc:", acc)
         #log.debug("Gyro:", gyro)

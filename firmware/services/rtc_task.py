@@ -1,6 +1,5 @@
 import uasyncio as asyncio
 from machine import Pin, RTC
-import gc
 from logger import Logger
 import time
 from drivers import pcf85063 as pcf85063_driver
