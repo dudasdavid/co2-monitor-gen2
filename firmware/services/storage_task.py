@@ -122,7 +122,7 @@ def _ensure_log_file(path):
     except Exception as e:
         log.error("Failed to create log file:", csv, e)
 
-async def _append_sensor_row(path, limit_rows, yield_every=50):
+async def _append_sensor_row(path, limit_rows, yield_every=20):
     """
     Append one sensor row and trim to last `limit_rows` data lines.
     """
@@ -209,7 +209,7 @@ async def _append_sensor_row(path, limit_rows, yield_every=50):
         
         sd_card_recovery()
 
-async def _load_co2_history_from_log(path, yield_every=20):
+async def _load_co2_history_from_log(path, yield_every=10):
     """
     Read /sd/sensor_logs.csv and rebuild var.scd41_co2_history
     from all entries in the last 24 hours.
