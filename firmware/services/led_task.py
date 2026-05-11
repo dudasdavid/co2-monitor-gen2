@@ -6,16 +6,37 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
-# 128-step breathing table, values 1..100
+# breathing table, values 1..100
 BREATH_TABLE = [
-  50,52,55,57,60,62,65,67,70,72,75,77,79,82,84,86,
-  88,90,92,94,95,97,98,99,100,100,100,100,99,98,97,95,
-  94,92,90,88,86,84,82,79,77,75,72,70,67,65,62,60,
-  57,55,52,50,47,45,42,40,37,35,32,30,28,25,23,21,
-  19,17,15,13,11,9,8,6,5,3,2,1,0,0,0,0,
-  1,2,3,5,6,8,9,11,13,15,17,19,21,23,25,28,
-  30,32,35,37,40,42,45,47
+    0,0,0,0,0,1,1,1,2,2,3,4,5,6,7,8,
+    10,11,13,15,17,19,22,24,27,30,33,36,39,42,46,49,
+    53,56,60,63,67,70,74,77,80,83,86,89,91,93,95,96,
+    97,98,99,99,100,100,100,100,100,99,99,98,97,96,95,93,
+    91,89,86,83,80,77,74,70,67,63,60,56,53,49,46,42,
+    39,36,33,30,27,24,22,19,17,15,13,11,10,8,7,6,
+    5,4,3,2,2,1,1,1,0,0,0,0
 ]
+
+# global / persistent
+v_breath_filt = 0.0
+
+def smooth_breath(v):
+    global v_breath_filt
+
+    # Preserve true endpoints immediately
+    if v <= 0:
+        v_breath_filt = 0.0
+        return 0.0
+
+    if v >= 100:
+        v_breath_filt = 100.0
+        return 100.0
+
+    # Light smoothing
+    alpha = 0.35   # higher = faster, lower = smoother
+    v_breath_filt += alpha * (v - v_breath_filt)
+
+    return v_breath_filt
 
 def convert_hsv2rgb(h,s,v):
     """
@@ -114,6 +135,7 @@ async def led_task(period = 1.0):
                 if var.sensor_data.lux_veml7700 < 1:
                     v_breath_scaled = 0
                 
+                v_breath_scaled = smooth_breath(v_breath_scaled)
                 rgb = convert_hsv2rgb(h, s, v_breath_scaled)
                 for i in range(0, len(np)):
                     np[i] = rgb
@@ -167,7 +189,8 @@ async def led_task(period = 1.0):
                 # In pitch black turn off LEDs completely
                 if var.sensor_data.lux_veml7700 < 1:
                     v_breath_scaled = 0
-                
+                    
+                v_breath_scaled = smooth_breath(v_breath_scaled)
                 rgb = convert_hsv2rgb(h, s, v_breath_scaled)
                 for i in range(0, len(np)):
                     np[i] = rgb
@@ -191,7 +214,6 @@ async def led_task(period = 1.0):
             for i in range(0, len(np)):
                 np[i] = (100, 100, 100)
             np.write() # write data to all pixels
-            
 
         await asyncio.sleep(period)
         
