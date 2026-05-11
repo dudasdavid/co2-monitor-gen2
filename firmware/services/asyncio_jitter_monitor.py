@@ -36,13 +36,7 @@ async def asyncio_jitter_monitor(period_ms = 10):
         if time.ticks_diff(after, report_start) >= report_ms:
             avg_jitter = sum_jitter / samples
 
-            log.info(
-                "avg:",
-                round(avg_jitter, 2),
-                "ms | max:",
-                max_jitter,
-                "ms"
-            )
+            log.info(f"Avg: {avg_jitter:.2f} ms | Max: {max_jitter} ms")
 
             # reset counters
             report_start = after
