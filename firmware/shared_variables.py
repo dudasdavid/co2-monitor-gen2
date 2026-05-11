@@ -170,3 +170,4 @@ EVENT_AUDIO_OFF = 3
 led_request_co2 = "Green"
 led_request_temp = "Green"
 led_request_hum = "Green"
+backlight_override = False

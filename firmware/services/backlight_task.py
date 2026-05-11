@@ -80,7 +80,10 @@ async def backlight_task(period = 1.0):
         #log.debug("Calculated duty [0-1000]:", _duty)
         var.system_data.bl_duty_percent = int(_duty)
         
-        pwm.duty_u16(int(_duty*65.535)) # calculate the 0...1000 range to 0...65535 (uint_16)
+        if var.backlight_override:
+            pwm.duty_u16(65535) # override to high brightness
+        else:
+            pwm.duty_u16(int(_duty*65.535)) # calculate the 0...1000 range to 0...65535 (uint_16)
         
         var.system_data.backlight_task_timestamp = time.time()
         
