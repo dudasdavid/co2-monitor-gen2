@@ -893,11 +893,11 @@ def create_co2_screen(alt=False):
     ring.set_value(100)
     ring.set_style_pad_all(0, 0)
 
-    ring.set_style_arc_width(3, lv.PART.MAIN)
+    ring.set_style_arc_width(2, lv.PART.MAIN)
     ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
 
-    ring.set_style_arc_width(3, lv.PART.INDICATOR)
+    ring.set_style_arc_width(2, lv.PART.INDICATOR)
     ring.set_style_arc_color(lv.color_hex(0x00FF55), lv.PART.INDICATOR)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
 
@@ -954,7 +954,7 @@ def create_co2_screen(alt=False):
         ring_g1.set_style_arc_opa(15 + x // 1, lv.PART.INDICATOR)
         #ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
 
-    lv.timer_create(glow_timer_cb, 3000, None)
+    #lv.timer_create(glow_timer_cb, 3000, None)
 
     # -----------------------------
     # CO2 update
