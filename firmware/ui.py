@@ -451,7 +451,7 @@ def create_roll_indicator_screen(alt=False):
     def timer_cb(timer):
         update_screen()
 
-    lv.timer_create(timer_cb, 200, None)
+    lv.timer_create(timer_cb, 100, None)
 
     # Swipe gestures
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)

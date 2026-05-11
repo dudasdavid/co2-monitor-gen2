@@ -258,7 +258,7 @@ async def main():
 
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))
-        asyncio.create_task(imu_task(i2c_bus, 0.15))
+        asyncio.create_task(imu_task(i2c_bus, 0.05))
         asyncio.create_task(rtc_task(i2c_bus, 2))
         asyncio.create_task(display_handler_task(display, 0.3))
     elif var.hw_variant == "spi":
