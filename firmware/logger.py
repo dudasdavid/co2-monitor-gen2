@@ -19,7 +19,7 @@ class Logger:
         prefix = "[{}][{}][{}]".format(self._timestamp(), self.name, level)
         if args:
             print(prefix, *args)
-            
+            '''
             prefix = prefix.replace("INFO", "#00ff00 INFO#")
             prefix = prefix.replace("ERROR", "#ff0000 ERROR#")
             prefix = prefix.replace("WARN", "#ffff00 WARN#")
@@ -54,7 +54,7 @@ class Logger:
                 
             if len(var.logger_error) > self.MAX_LINES:
                 del var.logger_error[0:len(var.logger_error) - self.MAX_LINES]
-                
+            '''
         else:
             print(prefix)
 
