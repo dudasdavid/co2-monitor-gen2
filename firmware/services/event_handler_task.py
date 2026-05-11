@@ -22,11 +22,18 @@ async def event_handler_task():
 
         if event_type == EVENT_SHORT:
             log.debug("SHORT press detected on:", btn_name)
-            if btn_name == "down":
-                ui.prev_screen(audio_feedback=False)
-            elif btn_name == "up":
-                ui.next_screen(audio_feedback=False)
-            await var.audio_events.put(var.EVENT_AUDIO_SHORT)
+            if not var.selected_alt and var.screen_names[var.current_idx] in ["Snake"]:
+                if btn_name == "down":
+                    var.snake_screen["turn_left"]()
+                elif btn_name == "up":
+                    var.snake_screen["turn_right"]()
+                await var.audio_events.put(var.EVENT_AUDIO_SHORT)
+            else:
+                if btn_name == "down":
+                    ui.prev_screen(audio_feedback=False)
+                elif btn_name == "up":
+                    ui.next_screen(audio_feedback=False)
+                await var.audio_events.put(var.EVENT_AUDIO_SHORT)
 
         elif event_type == EVENT_LONG:
             log.debug("LONG press detected on:", btn_name)
