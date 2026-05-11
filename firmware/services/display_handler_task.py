@@ -20,7 +20,7 @@ async def display_handler_task(display, period = 1.0):
             display.set_rotation(lv.DISPLAY_ROTATION._0)
             var.backlight_override = False
         # On snake screen set it to 90 degrees and disable screen rotation
-        elif not var.selected_alt and var.screen_names[var.current_idx] in ["Snake"]:
+        elif var.selected_game and var.screen_names_game[var.current_idx_game] in ["Snake"]:
             display.set_rotation(lv.DISPLAY_ROTATION._90)
             var.backlight_override = True
         else:

@@ -33,12 +33,18 @@ def show_screen(idx, lv_animation):
     if not var.screens:
         return
     
-    if var.selected_alt == 0:
-        var.current_idx = idx % len(var.screens)
-        screen = var.screens[var.current_idx]
-    else:
+    # If alt screens carousel is selected (settings screens)
+    if var.selected_alt == 1:
         var.current_idx_alt = idx % len(var.screens_alt)
         screen = var.screens_alt[var.current_idx_alt]
+    # If game screens carousel is selected
+    elif var.selected_game == 1:
+        var.current_idx_game = idx % len(var.screens_game)
+        screen = var.screens_game[var.current_idx_game]
+    # Normal - usually sensor - screens carousel is selected
+    else:
+        var.current_idx = idx % len(var.screens)
+        screen = var.screens[var.current_idx]
         
     #lv.screen_load(var.screens[var.current_idx])
     lv.screen_load_anim(
@@ -51,10 +57,12 @@ def show_screen(idx, lv_animation):
 
 def next_screen(audio_feedback=True):
     lv = init()
-    if var.selected_alt == 0:
-        idx = var.current_idx + 1
-    else:
+    if var.selected_alt == 1:
         idx = var.current_idx_alt + 1
+    elif var.selected_game == 1:
+        idx = var.current_idx_game + 1
+    else:
+        idx = var.current_idx + 1
         
     show_screen(idx, lv.SCREEN_LOAD_ANIM.NONE) # OUT_LEFT
     
@@ -63,10 +71,12 @@ def next_screen(audio_feedback=True):
 
 def prev_screen(audio_feedback=True):
     lv = init()
-    if var.selected_alt == 0:
-        idx = var.current_idx - 1
-    else:
+    if var.selected_alt == 1:
         idx = var.current_idx_alt - 1
+    elif var.selected_game == 1:
+        idx = var.current_idx_game - 1
+    else:
+        idx = var.current_idx - 1
     
     show_screen(idx, lv.SCREEN_LOAD_ANIM.NONE) # OUT_RIGHT
     
@@ -1464,7 +1474,7 @@ def create_sensor_table(alt=False):
         var.screen_names_alt.append(screen_name)
     return scr
 
-def create_snake_screen(alt=False):
+def create_snake_screen(alt=False, game=True):
 
     lv = init()
 
@@ -1600,12 +1610,15 @@ def create_snake_screen(alt=False):
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
 
     screen_name = "Snake"
-    if not alt:
-        var.screens.append(scr)
-        var.screen_names.append(screen_name)
-    else:
+    if alt:
         var.screens_alt.append(scr)
         var.screen_names_alt.append(screen_name)
+    elif game:
+        var.screens_game.append(scr)
+        var.screen_names_game.append(screen_name)
+    else:
+        var.screens.append(scr)
+        var.screen_names.append(screen_name)
 
     return {
         "scr": scr,

@@ -68,7 +68,7 @@ async def led_task(period = 1.0):
     while True:
         # Welcome screen is not registered as normal screens so at startup len is 0
         if len(var.screen_names) > 0:
-            if not var.selected_alt and var.screen_names[var.current_idx] in ["CO2", "CO2 chart"]:
+            if not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["CO2", "CO2 chart"]:
                 value = var.sensor_data.co2_scd41
                 if value < 1000:
                     h = 120
@@ -120,7 +120,7 @@ async def led_task(period = 1.0):
                     
                 np.write() # write data to all pixels
             
-            elif not var.selected_alt and var.screen_names[var.current_idx] in ["Sensors"]:
+            elif not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["Sensors"]:
                 
                 if var.led_request_co2 == "Red" or var.led_request_temp == "Red" or var.led_request_hum == "Red":
                     h = 0

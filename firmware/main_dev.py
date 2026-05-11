@@ -286,9 +286,9 @@ async def main():
     ui.create_timezone_screen(alt = True)
     ui.create_ap_screen(alt = True)
     ui.create_roll_indicator_screen(alt = True)
-    var.snake_screen = ui.create_snake_screen()
+    var.snake_screen = ui.create_snake_screen(game = True)       # Performance ✅
     #ui.create_dummy_screen()
-    ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN)   # start with screen 0
+    ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN) # start with screen 0
 
     log.info("Free RAM after UI:", int(gc.mem_free() / 1024), "kB")
 

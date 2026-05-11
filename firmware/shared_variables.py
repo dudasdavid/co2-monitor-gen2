@@ -140,11 +140,16 @@ sleep_till_next_connection = 0
 # screens are main screens, alt screens are a second page of screens
 screens = []
 screens_alt = []
+screens_game = []
 screen_names = []
 screen_names_alt = []
+screen_names_game = []
 current_idx = 0
 current_idx_alt = 0
+current_idx_game = 0
+# flag to show if alternative or game screen is selected
 selected_alt = 0
+selected_game = 0
 
 touch_start_x = 0
 touch_start_y = 0
