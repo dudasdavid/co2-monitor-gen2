@@ -1510,6 +1510,19 @@ def create_snake_screen(alt=False, game=True):
     scr = lv.obj()
     scr.set_style_bg_color(lv.color_hex(0x000000), 0)
     scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
+    
+    # Curved title
+    title = lv.arclabel(scr)
+    title.set_size(240, 240)
+    title.center()
+    title.set_text(lv.SYMBOL.LEFT + "   TURN   " + lv.SYMBOL.RIGHT)
+    title.set_style_text_font(lv.font_montserrat_14, 0)
+    title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+
+    # These are the key arc-label controls in LVGL 9.x
+    title.set_radius(102)         # curve radius
+    title.set_angle_start(249)    # where text begins
+    title.set_angle_size(90)      # span of the text
 
     GRID_W = 24
     GRID_H = 24
