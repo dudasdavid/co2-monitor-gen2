@@ -92,6 +92,34 @@ async def play_pcm(pcm, tail_ms = 30):
     finally:
         audio.deinit()
 
+def play_pcm_blocking(pcm, tail_ms=40):
+    # cannot initialize i2s globally, due to several glitches with DMA pressure
+    audio = I2S(
+        0,
+        sck=Pin(I2S_SCK_PIN),
+        ws=Pin(I2S_WS_PIN),
+        sd=Pin(I2S_SD_PIN),
+        mode=I2S.TX,
+        bits=16,
+        format=I2S.MONO,
+        rate=8000,
+        ibuf=4096
+    )
+
+    try:
+        audio.write(pcm)
+        
+        if tail_ms > 0:
+            tail_bytes = int(8000 * 2 * tail_ms / 1000)
+            audio.write(bytearray(tail_bytes))
+
+        # Let remaining buffered audio physically play out
+        play_ms = int(len(pcm) / 2 / 8000 * 1000)
+        time.sleep_ms(play_ms + tail_ms + 20)
+
+    finally:
+        audio.deinit()
+
 async def audio_task():
     #Init
     log = Logger("i2s", debug_enabled=True)
@@ -115,13 +143,13 @@ async def audio_task():
                 await asyncio.sleep_ms(20)
             elif var.hw_variant == "spi":
                 await asyncio.sleep_ms(20)
-            await play_pcm(click_pcm, tail_ms = 50)
+            play_pcm_blocking(click_pcm, tail_ms = 85)
         elif event_type == var.EVENT_AUDIO_LONG:
             pass
-            await play_pcm(long_pcm, tail_ms = 50)
+            play_pcm_blocking(long_pcm, tail_ms = 40)
         elif event_type == var.EVENT_AUDIO_OFF:
-            await asyncio.sleep_ms(100)
-            await play_pcm(off_pcm)
+            await asyncio.sleep_ms(300)
+            play_pcm_blocking(off_pcm)
         else:
             pass
-            await play_pcm(click_pcm, tail_ms = 50)
+            play_pcm_blocking(click_pcm, tail_ms = 85)
