@@ -917,8 +917,8 @@ def create_co2_screen(alt=False):
         return a
 
     # Inner glow layers
-    ring_g1 = make_ring(232, 8, lv.color_hex(0x00FF55), 45)
-    #ring_g2 = make_ring(210, 6, lv.color_hex(0x00FF55), 24)
+    ring_g1 = make_ring(236, 6, lv.color_hex(0x00FF55), 45)
+    #ring_g2 = make_ring(225, 8, lv.color_hex(0x00FF55), 24)
 
     # main sharp ring
     ring = lv.arc(scr)
@@ -976,24 +976,19 @@ def create_co2_screen(alt=False):
     # -----------------------------
     # Breathing animation
     # -----------------------------
-    glow_state = {"opa": 0, "dir": 1}
+    BREATH_OPA = [0, 2, 5, 9, 15, 22, 30, 37, 40, 37, 30, 22, 15, 9, 5, 2]
+
+    glow_state = {"i": 0}
 
     def glow_timer_cb(t):
-        x = glow_state["opa"] + glow_state["dir"] * 6
+        x = BREATH_OPA[glow_state["i"]]
 
-        if x >= 40:
-            x = 40
-            glow_state["dir"] = -1
-        elif x <= 0:
-            x = 0
-            glow_state["dir"] = 1
+        ring_g1.set_style_arc_opa(45 + x, lv.PART.INDICATOR)
+        #ring_g2.set_style_arc_opa(14 + (x * 2) // 3, lv.PART.INDICATOR)
 
-        glow_state["opa"] = x
+        glow_state["i"] = (glow_state["i"] + 1) % len(BREATH_OPA)
 
-        ring_g1.set_style_arc_opa(15 + x // 1, lv.PART.INDICATOR)
-        #ring_g2.set_style_arc_opa(int(24 + x // 1.5), lv.PART.INDICATOR)
-
-    #lv.timer_create(glow_timer_cb, 3000, None)
+    #lv.timer_create(glow_timer_cb, 1000, None)
 
     # -----------------------------
     # CO2 update
@@ -1018,7 +1013,7 @@ def create_co2_screen(alt=False):
         
         bat["update"]()
 
-    lv.timer_create(set_co2_cb, 2000, None)
+    lv.timer_create(set_co2_cb, 3000, None)
 
     # Enable swipe on full screen
     scr.add_event_cb(swipe_event_cb, lv.EVENT.ALL, None)
