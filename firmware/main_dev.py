@@ -270,12 +270,12 @@ async def main():
         asyncio.create_task(rtc_task(i2c_bus, 2))                # Performance ✅
         pass
     elif var.hw_variant == "spi":
-        asyncio.create_task(io_task(0.5))                        # TODO
+        asyncio.create_task(io_task(0.5))                        # Performance ✅
         pass
 
     # 4.5) Start event and display handlers after IO and IMU started
     asyncio.create_task(event_handler_task())                    # Performance ✅
-    asyncio.create_task(display_handler_task(display, 0.3))      # Performance ✅
+    asyncio.create_task(display_handler_task(display, 0.1))      # Performance ✅
 
     # 4.6) Only start networking related stuff after everything else started
     asyncio.create_task(networking_task(30, 60))                 # Performance ✅
@@ -284,7 +284,7 @@ async def main():
     
     # 3) start UI  
     ui.create_sensor_table(alt = True)                           # Performance ✅
-    ui.create_co2_screen()                                       # Performance ⬇️
+    ui.create_co2_screen()                                       # Performance ✅
     ui.create_co2_chart_screen()                                 # Performance ✅
     ui.create_sensor_screen()                                    # Performance ✅
     ui.create_timezone_screen(alt = True)                        # Performance ✅
