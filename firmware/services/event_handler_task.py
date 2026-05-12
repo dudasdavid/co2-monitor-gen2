@@ -27,7 +27,8 @@ async def event_handler_task():
                     var.snake_screen["turn_left"]()
                 elif btn_name == "up":
                     var.snake_screen["turn_right"]()
-                await var.audio_events.put(var.EVENT_AUDIO_SHORT)
+                # Don't play blocking click sound, non-blocking click sound has poor experience
+                #await var.audio_events.put(var.EVENT_AUDIO_SHORT)
             else:
                 if btn_name == "down":
                     ui.prev_screen(audio_feedback=False)
