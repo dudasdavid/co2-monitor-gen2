@@ -1575,7 +1575,8 @@ def create_snake_screen(alt=False, game=True):
         # Round display parameters
         cx = GRID_W * CELL // 2
         cy = GRID_H * CELL // 2
-        radius = 120
+        # place foods within a smaller circle than the screen (and walls)
+        radius = 100
 
         while True:
             gx = random.randrange(GRID_W)
@@ -1609,8 +1610,24 @@ def create_snake_screen(alt=False, game=True):
         nx = hx + direction[0]
         ny = hy + direction[1]
         new_head = (nx, ny)
+        
+        # Cell center in pixels
+        px = nx * CELL + CELL // 2
+        py = ny * CELL + CELL // 2
 
-        if nx < 0 or nx >= GRID_W or ny < 0 or ny >= GRID_H or new_head in snake:
+        # Screen center
+        cx = GRID_W * CELL // 2
+        cy = GRID_H * CELL // 2
+        radius = 120
+
+        dxc = px - cx
+        dyc = py - cy
+
+        outside_circle = (
+            dxc * dxc + dyc * dyc > radius * radius
+        )
+
+        if outside_circle or new_head in snake:
             reset_game()
             return
 
