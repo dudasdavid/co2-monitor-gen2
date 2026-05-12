@@ -56,7 +56,7 @@ def load_wav_pcm(path):
         data = f.read(data_size)
         return ch, rate, data
 
-async def play_pcm(pcm, tail = 0):
+async def play_pcm(pcm, tail_ms = 30):
     # cannot initialize i2s globally, due to several glitches with DMA pressure
     audio = I2S(
         0,
@@ -67,7 +67,7 @@ async def play_pcm(pcm, tail = 0):
         bits=16,         # All samples are 16-bit PCM
         format=I2S.MONO, # All samples are MONO
         rate=8000,       # All samples are 8kHz
-        ibuf=4200
+        ibuf=1200
     )
     
     sw = asyncio.StreamWriter(audio)
@@ -79,13 +79,15 @@ async def play_pcm(pcm, tail = 0):
             sw.write(mv[i:i + CHUNK])
             await sw.drain()          # non-blocking feed to I2S
 
-        if tail > 0:
-            tail = bytearray(1024 * tail)
-            sw.write(tail)
+        # Add silence to avoid cutting the last samples
+        if tail_ms > 0:
+            tail_bytes = int(8000 * 2 * tail_ms / 1000)  # 8kHz * 16-bit mono
+            sw.write(bytearray(tail_bytes))
             await sw.drain()
 
-        # Give the hardware a short moment to finish shifting out the last DMA-buffered samples.
-        await asyncio.sleep_ms(20)
+        # Wait approximately until the actual audio has shifted out
+        play_ms = int(len(pcm) / 2 / 8000 * 1000)
+        await asyncio.sleep_ms(play_ms + tail_ms + 30)
 
     finally:
         audio.deinit()
@@ -96,7 +98,7 @@ async def audio_task():
     
     # Load and play boot sound ASAP
     boot_ch, boot_rate, boot_pcm = load_wav_pcm("/sounds/oxp.wav")
-    await play_pcm(boot_pcm, tail = 1)
+    await play_pcm(boot_pcm, tail_ms = 1)
 
     # Pre-load other sound samples to RAM
     click_ch, click_rate, click_pcm = load_wav_pcm("/sounds/click.wav")
@@ -113,13 +115,13 @@ async def audio_task():
                 await asyncio.sleep_ms(20)
             elif var.hw_variant == "spi":
                 await asyncio.sleep_ms(20)
-            await play_pcm(click_pcm)
+            await play_pcm(click_pcm, tail_ms = 50)
         elif event_type == var.EVENT_AUDIO_LONG:
             pass
-            await play_pcm(long_pcm)
+            await play_pcm(long_pcm, tail_ms = 50)
         elif event_type == var.EVENT_AUDIO_OFF:
             await asyncio.sleep_ms(100)
             await play_pcm(off_pcm)
         else:
             pass
-            await play_pcm(click_pcm)
+            await play_pcm(click_pcm, tail_ms = 50)
