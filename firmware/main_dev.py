@@ -220,8 +220,6 @@ def init_display_spi():
     
     return display
 
-import ui
-
 async def main():
 
     log = Logger("main", debug_enabled=False)
@@ -246,24 +244,29 @@ async def main():
     # 2) Immediately start jitter monitoring tool with 50ms, enable it only for debugging
     #asyncio.create_task(asyncio_jitter_monitor(50))              # Performance ✅
     
-    # 3) Start welcome screen
-    ui.create_welcome_screen()                                   # Performance ✅
+    # 3) Import slim ui_welcome and start the welcome screen
+    import ui_welcome
+    ui_welcome.create_welcome_screen()                           # Performance ✅
     
-    # 4) Spawn threads, starting with LED lights and sensor init
+    # 4) Spawn the most important threads, starting with LED lights and sensor init
     asyncio.create_task(sensor_task(0.3))                        # Performance ✅
     asyncio.create_task(led_task(0.03))                          # Performance ✅
-    # 4.1) Start loading history from log with frequent yielding
+    
+    # 4.1) Import UI only here, might take some time
+    import ui
+    
+    # 4.2) Start loading history from log with frequent yielding
     asyncio.create_task(history_task(2))                         # Performance ✅
     asyncio.create_task(storage_task(5))                         # Performance ✅
-    # 4.2) During log loading we can play the startup tune
+    # 4.3) During log loading we can play the startup tune
     await asyncio.sleep(0.1)
     asyncio.create_task(audio_task())                            # Performance ✅
     await asyncio.sleep(5)
-    # 4.3) Keep spawning other services
+    # 4.4) Keep spawning other services
     asyncio.create_task(idle_task(1.5))                          # Performance ✅
     asyncio.create_task(backlight_task(0.1))                     # Performance ✅
     asyncio.create_task(adc_task(1))                             # Performance ✅
-    # 4.4) Spawn some HW dependent services
+    # 4.5) Spawn some HW dependent services
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))      # Performance ✅
         asyncio.create_task(imu_task(i2c_bus, 0.04))             # Performance ✅
@@ -273,16 +276,16 @@ async def main():
         asyncio.create_task(io_task(0.5))                        # Performance ✅
         pass
 
-    # 4.5) Start event and display handlers after IO and IMU started
+    # 4.6) Start event and display handlers after IO and IMU started
     asyncio.create_task(event_handler_task())                    # Performance ✅
     asyncio.create_task(display_handler_task(display, 0.1))      # Performance ✅
 
-    # 4.6) Only start networking related stuff after everything else started
+    # 4.7) Only start networking related stuff after everything else started
     asyncio.create_task(networking_task(30, 60))                 # Performance ✅
     asyncio.create_task(ap_auto_disable_task(1))                 # Performance ✅
     asyncio.create_task(mqtt_task(10))                           # Performance ✅
     
-    # 3) start UI  
+    # 5) start UI  
     ui.create_sensor_table(alt = True)                           # Performance ✅
     ui.create_co2_screen()                                       # Performance ✅
     ui.create_co2_chart_screen()                                 # Performance ✅
