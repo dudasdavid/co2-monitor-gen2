@@ -19,7 +19,6 @@ atan_lut = [
     for i in range(ATAN_LUT_SIZE + 1)
 ]
 
-ROLL_OFFSET = 0.0
 ROLL_INVERT = False
 
 G = 9.81
@@ -100,12 +99,12 @@ def calculate_roll_pitch(acc):
     roll_rad = math.atan2(ay, math.sqrt(ax * ax + az * az))
 
     roll_deg = math.degrees(roll_rad)
-    pitch_deg = math.degrees(pitch_rad)
+    pitch_deg = math.degrees(pitch_rad) - var.pitch_offset
 
     if ROLL_INVERT:
         roll_deg = -roll_deg
 
-    roll_deg = wrap_180(roll_deg - ROLL_OFFSET)
+    roll_deg = wrap_180(roll_deg - var.roll_offset)
     
     last_roll = roll_deg
     last_pitch = pitch_deg
@@ -126,7 +125,7 @@ def calculate_roll_pitch_simple_lut(acc):
 
     # pitch: X against the remaining gravity vector
     horiz_yz = math.sqrt(ay * ay + az * az)
-    pitch_deg = -fast_atan2_deg(-ax, horiz_yz)
+    pitch_deg = -fast_atan2_deg(-ax, horiz_yz) - var.pitch_offset
 
     # Continuous roll proxy:
     # use X when vertical, use Z when flat, smoothly via gravity vector magnitude
@@ -136,7 +135,7 @@ def calculate_roll_pitch_simple_lut(acc):
     if ROLL_INVERT:
         roll_deg = -roll_deg
 
-    roll_deg = wrap_180(roll_deg - ROLL_OFFSET)
+    roll_deg = wrap_180(roll_deg - var.roll_offset)
     
     last_roll = roll_deg
     last_pitch = pitch_deg
