@@ -6,6 +6,31 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
+# ---- Constants -----------
+LED_PIN   = const(43)
+LED_COUNT = const(18)
+
+H_GREEN   = const(120)
+H_YELLOW  = const(48)
+H_RED     = const(0)
+H_BLUE    = const(210)
+
+SAT_FULL  = const(100)
+
+RAINBOW_VALUE = const(20)
+STATIC_VALUE  = (20, 20, 20)
+STARTUP_VALUE = (30, 30, 100)
+
+LUX_OFF = const(1.0)
+LUX_LOW = const(5.0)
+LUX_MAX = const(100.0)
+
+BREATH_MIN_VISIBLE  = 0.5
+BREATH_SCALE_DARK   = 1 / 10
+BREATH_SCALE_BRIGHT = 1 / 3
+
+SMOOTH_ALPHA = const(0.35)
+
 # breathing table, values 1..100
 BREATH_TABLE = [
     0,0,0,0,0,1,1,1,2,2,3,4,5,6,7,8,
@@ -17,8 +42,21 @@ BREATH_TABLE = [
     5,4,3,2,2,1,1,1,0,0,0,0
 ]
 
-# global / persistent
+# ---- Persistent animation state ----
 v_breath_filt = 0.0
+
+# ---- Helper functions --------------
+def clamp(x, lo, hi):
+    if x < lo:
+        return lo
+    if x > hi:
+        return hi
+    return x
+
+def fill(np, rgb):
+    for i in range(len(np)):
+        np[i] = rgb
+    np.write()
 
 def smooth_breath(v):
     global v_breath_filt
@@ -54,6 +92,7 @@ def convert_hsv2rgb(h,s,v):
     h_div = h / 60
     i = int(h_div)
     f = h_div - i
+    
     p = v * (1 - s)
     q = v * (1 - s * f)
     t = v * (1 - s * (1 - f))
@@ -73,157 +112,158 @@ def convert_hsv2rgb(h,s,v):
 
     return (int(r * 255), int(g * 255), int(b * 255))
 
+# ---- Screen state helpers ----------------
+def normal_screen_active(name):
+    return (
+        not var.selected_alt and
+        not var.selected_game and
+        len(var.screen_names) > 0 and
+        var.screen_names[var.current_idx] == name
+    )
+
+def normal_screen_in(names):
+    return (
+        not var.selected_alt and
+        not var.selected_game and
+        len(var.screen_names) > 0 and
+        var.screen_names[var.current_idx] in names
+    )
+
+def roll_or_snake_active():
+    roll_active = (
+        var.selected_alt and
+        not var.selected_game and
+        var.screen_names_alt[var.current_idx_alt] in ["Roll"]
+    )
+
+    snake_active = (
+        not var.selected_alt and
+        var.selected_game and
+        var.screen_names_game[var.current_idx_game] in ["Snake"]
+    )
+
+    return roll_active or snake_active
+
+# ---- Color decision helpers -------------
+def co2_hue(value):
+    if value < 1000:
+        return H_GREEN
+    if value < 1500:
+        return H_YELLOW
+    return H_RED
+
+def worst_sensor_hue():
+    if (
+        var.led_request_co2 == "Red" or
+        var.led_request_temp == "Red" or
+        var.led_request_hum == "Red"
+    ):
+        return H_RED
+
+    if (
+        var.led_request_co2 == "Yellow" or
+        var.led_request_temp == "Yellow" or
+        var.led_request_hum == "Yellow"
+    ):
+        return H_YELLOW
+
+    if (
+        var.led_request_co2 == "Blue" or
+        var.led_request_temp == "Blue" or
+        var.led_request_hum == "Blue"
+    ):
+        return H_BLUE
+
+    return H_GREEN
+
+# ---- Breathing brightness helpers ------
+def scale_breath_by_lux(v_breath, lux):
+    # Pitch black: completely off
+    if lux < LUX_OFF:
+        return 0
+
+    # Very low light: no animation, tiny fixed value
+    if lux < LUX_LOW:
+        return BREATH_MIN_VISIBLE
+
+    lux_clamped = clamp(lux, LUX_LOW, LUX_MAX)
+    t = (lux_clamped - LUX_LOW) / (LUX_MAX - LUX_LOW)
+    scale = BREATH_SCALE_DARK + t * (BREATH_SCALE_BRIGHT - BREATH_SCALE_DARK)
+    v_scaled = v_breath * scale
+
+    # Avoid very low yellow becoming visually red
+    if v_scaled < BREATH_MIN_VISIBLE:
+        v_scaled = BREATH_MIN_VISIBLE
+
+    return v_scaled
+
+def next_breath_value(idx):
+    v = BREATH_TABLE[idx]
+    idx += 1
+    if idx >= len(BREATH_TABLE):
+        idx = 0
+
+    return v, idx
+
+def apply_breathing(np, h, idx):
+    v_breath, idx = next_breath_value(idx)
+
+    lux = var.sensor_data.lux_veml7700
+    v_scaled = scale_breath_by_lux(v_breath, lux)
+    v_scaled = smooth_breath(v_scaled)
+
+    rgb = convert_hsv2rgb(h, SAT_FULL, v_scaled)
+    fill(np, rgb)
+
+    return idx
+
+# ---- Animation effects -----------------
+def apply_rainbow(np, phase):
+    count = len(np)
+
+    for i in range(count):
+        h = phase + i * 360.0 / count
+        np[i] = convert_hsv2rgb(h, SAT_FULL, RAINBOW_VALUE)
+
+    np.write()
+
+    phase += 10
+    return phase
+
+# ---- Main task--------------------------
 async def led_task(period = 1.0):
     
     log = Logger("led", debug_enabled=False)
     
-    #Init
-    pin = Pin(43, Pin.OUT)
-    np = neopixel.NeoPixel(pin, 18)
+    pin = Pin(LED_PIN, Pin.OUT)
+    np = neopixel.NeoPixel(pin, LED_COUNT)
 
     phase = 0
-    v_breath = 0
-    dir = 1
-    idx = 0
+    breath_idx = 0
+    
     #Run
     while True:
-        # Welcome screen is not registered as normal screens so at startup len is 0
-        if len(var.screen_names) > 0:
-            # Breathing animation on CO2 screens, LED color only depends on CO2 level
-            if not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["CO2", "CO2 chart"]:
-                value = var.sensor_data.co2_scd41
-                if value < 1000:
-                    h = 120
-                elif value < 1500:
-                    h = 48
-                else:
-                    h = 0
-                    
-                s = 100
-                
-                # LUT sinusoidal breathing animation
-                v_breath = BREATH_TABLE[idx]
-                idx += 1
-                if idx >= len(BREATH_TABLE):
-                    idx = 0
-                    
-                # Ambient lux based LED ring intensity calculation
-                lux = var.sensor_data.lux_veml7700
-                # No animation on the lowest light intensity
-                if lux < 5:
-                    v_breath_scaled = 0.5
-                else:
-                    # v_scaled can be between /3 to /10 based on lux
-                    lux_min = 5.0
-                    lux_max = 100.0
+        # Startup / welcome screen
+        if len(var.screen_names) == 0:
+            fill(np, STARTUP_VALUE)
 
-                    # clamp lux into range
-                    lux_clamped = max(lux_min, min(lux, lux_max))
+        # CO2 screens: breathing, color from CO2 level
+        elif normal_screen_in(["CO2", "CO2 chart"]):
+            h = co2_hue(var.sensor_data.co2_scd41)
+            breath_idx = apply_breathing(np, h, breath_idx)
 
-                    # normalize 0..1
-                    t = (lux_clamped - lux_min) / (lux_max - lux_min)
+        # Sensors screen: breathing, color from worst sensor status
+        elif normal_screen_active("Sensors"):
+            h = worst_sensor_hue()
+            breath_idx = apply_breathing(np, h, breath_idx)
 
-                    # scale goes from 1/10 -> 1/3
-                    scale = (1/10) + t * ((1/3) - (1/10))
+        # Roll and Snake screens: static white-ish LEDs
+        elif roll_or_snake_active():
+            fill(np, STATIC_VALUE)
 
-                    v_breath_scaled = v_breath * scale
-                
-                # To avoid low yellow turning to red
-                if v_breath_scaled < 0.5:
-                    v_breath_scaled = 0.5
-                    
-                # In pitch black turn off LEDs completely
-                if var.sensor_data.lux_veml7700 < 1:
-                    v_breath_scaled = 0
-                
-                v_breath_scaled = smooth_breath(v_breath_scaled)
-                rgb = convert_hsv2rgb(h, s, v_breath_scaled)
-                for i in range(0, len(np)):
-                    np[i] = rgb
-                    
-                np.write() # write data to all pixels
-            
-            # Breathing animation on multi-sensor screen where worst sensor reading decides the color
-            elif not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["Sensors"]:
-                
-                if var.led_request_co2 == "Red" or var.led_request_temp == "Red" or var.led_request_hum == "Red":
-                    h = 0
-                elif var.led_request_co2 == "Yellow" or var.led_request_temp == "Yellow" or var.led_request_hum == "Yellow":
-                    h = 48
-                elif var.led_request_co2 == "Blue" or var.led_request_temp == "Blue" or var.led_request_hum == "Blue":
-                    h = 210
-                else:
-                    h = 120
-                                   
-                s = 100
-                
-                # LUT sinusoidal breathing animation
-                v_breath = BREATH_TABLE[idx]
-                idx += 1
-                if idx >= len(BREATH_TABLE):
-                    idx = 0
-                    
-                # Ambient lux based LED ring intensity calculation
-                lux = var.sensor_data.lux_veml7700
-                # No animation on the lowest light intensity
-                if lux < 5:
-                    v_breath_scaled = 0.5
-                else:
-                    # v_scaled can be between /3 to /10 based on lux
-                    lux_min = 5.0
-                    lux_max = 100.0
-
-                    # clamp lux into range
-                    lux_clamped = max(lux_min, min(lux, lux_max))
-
-                    # normalize 0..1
-                    t = (lux_clamped - lux_min) / (lux_max - lux_min)
-
-                    # scale goes from 1/10 -> 1/3
-                    scale = (1/10) + t * ((1/3) - (1/10))
-
-                    v_breath_scaled = v_breath * scale
-                
-                # To avoid low yellow turning to red
-                if v_breath_scaled < 0.5:
-                    v_breath_scaled = 0.5
-                    
-                # In pitch black turn off LEDs completely
-                if var.sensor_data.lux_veml7700 < 1:
-                    v_breath_scaled = 0
-                    
-                v_breath_scaled = smooth_breath(v_breath_scaled)
-                rgb = convert_hsv2rgb(h, s, v_breath_scaled)
-                for i in range(0, len(np)):
-                    np[i] = rgb
-                    
-                np.write() # write data to all pixels
-                
-            # On roll and snake screens rainbow animation is too slow
-            elif var.selected_alt and not var.selected_game and var.screen_names_alt[var.current_idx_alt] in ["Roll"] or \
-                 not var.selected_alt and var.selected_game and var.screen_names_game[var.current_idx_game] in ["Snake"]:
-                
-                for i in range(0, len(np)):
-                    np[i] = (20, 20, 20)
-                np.write() # write data to all pixels
-                
-            # Rotation rainbow animation as default
-            else:
-                for i in range(0, len(np)):
-                    h = phase + i*360.0 / (len(np)-0)
-                    s = 100
-                    v = 20
-                    
-                    np[i] = convert_hsv2rgb(h, s, v)
-                
-                np.write() # write data to all pixels
-                phase += 10
-                
-        # Only at startup when there are no valid screens registered        
+        # Default: rotating rainbow
         else:
-            for i in range(0, len(np)):
-                np[i] = (30, 30, 100)
-            np.write() # write data to all pixels
+            phase = apply_rainbow(np, phase)
 
         await asyncio.sleep(period)
         
