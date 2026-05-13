@@ -212,7 +212,7 @@ async def led_task(period = 1.0):
                 
         else:
             for i in range(0, len(np)):
-                np[i] = (100, 100, 100)
+                np[i] = (30, 30, 100)
             np.write() # write data to all pixels
 
         await asyncio.sleep(period)
