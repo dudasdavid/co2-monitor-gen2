@@ -89,6 +89,7 @@ async def led_task(period = 1.0):
     while True:
         # Welcome screen is not registered as normal screens so at startup len is 0
         if len(var.screen_names) > 0:
+            # Breathing animation on CO2 screens, LED color only depends on CO2 level
             if not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["CO2", "CO2 chart"]:
                 value = var.sensor_data.co2_scd41
                 if value < 1000:
@@ -142,6 +143,7 @@ async def led_task(period = 1.0):
                     
                 np.write() # write data to all pixels
             
+            # Breathing animation on multi-sensor screen where worst sensor reading decides the color
             elif not var.selected_alt and not var.selected_game and var.screen_names[var.current_idx] in ["Sensors"]:
                 
                 if var.led_request_co2 == "Red" or var.led_request_temp == "Red" or var.led_request_hum == "Red":
@@ -197,6 +199,15 @@ async def led_task(period = 1.0):
                     
                 np.write() # write data to all pixels
                 
+            # On roll and snake screens rainbow animation is too slow
+            elif var.selected_alt and not var.selected_game and var.screen_names_alt[var.current_idx_alt] in ["Roll"] or \
+                 not var.selected_alt and var.selected_game and var.screen_names_game[var.current_idx_game] in ["Snake"]:
+                
+                for i in range(0, len(np)):
+                    np[i] = (20, 20, 20)
+                np.write() # write data to all pixels
+                
+            # Rotation rainbow animation as default
             else:
                 for i in range(0, len(np)):
                     h = phase + i*360.0 / (len(np)-0)
@@ -205,11 +216,10 @@ async def led_task(period = 1.0):
                     
                     np[i] = convert_hsv2rgb(h, s, v)
                 
-                
-                
                 np.write() # write data to all pixels
                 phase += 10
                 
+        # Only at startup when there are no valid screens registered        
         else:
             for i in range(0, len(np)):
                 np[i] = (30, 30, 100)
