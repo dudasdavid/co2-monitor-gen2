@@ -862,9 +862,12 @@ def create_co2_screen(alt=False):
         a.set_style_arc_opa(opa, lv.PART.INDICATOR)
         return a
 
-    # Inner glow layers
-    ring_g1 = make_ring(236, 6, lv.color_hex(0x00FF55), 45)
-    #ring_g2 = make_ring(225, 8, lv.color_hex(0x00FF55), 24)
+    # Main glow
+    ring_g1 = make_ring(236, 6, lv.color_hex(0x00FF55), 56)
+    # Soft bloom
+    ring_g2 = make_ring(225, 8, lv.color_hex(0x00FF55), 36)
+    # Deep ambient glow
+    ring_g3 = make_ring(208, 14, lv.color_hex(0x00FF55), 24)
 
     # main sharp ring
     ring = lv.arc(scr)
@@ -955,7 +958,8 @@ def create_co2_screen(alt=False):
         ppm_label.set_style_text_color(color, 0)
 
         ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
-        #ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
+        ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
+        ring_g3.set_style_arc_color(color, lv.PART.INDICATOR)
         
         bat["update"]()
 
