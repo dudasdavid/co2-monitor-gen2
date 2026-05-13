@@ -942,24 +942,39 @@ def create_co2_screen(alt=False):
     # -----------------------------
     # CO2 update
     # -----------------------------
+    state = {
+        "co2": None,
+        "color_key": None,
+    }
+    
     def set_co2_cb(t):
         value = int(var.sensor_data.co2_scd41)
-        txt = str(value)
-        co2_label.set_text(txt)
 
         if value < 1000:
+            color_key = 0
             color = lv.color_hex(0x00FF55)
         elif value < 1500:
+            color_key = 1
             color = lv.color_hex(0x00D0FF)
         else:
+            color_key = 2
             color = lv.color_hex(0x303BFF)
+            
+        # Update text only if CO2 value changed
+        if value != state["co2"]:
+            state["co2"] = value
+            co2_label.set_text(str(value))
 
-        ring.set_style_arc_color(color, lv.PART.INDICATOR)
-        ppm_label.set_style_text_color(color, 0)
+        # Update colors only if color category changed
+        if color_key != state["color_key"]:
+            state["color_key"] = color_key
 
-        ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
-        ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
-        ring_g3.set_style_arc_color(color, lv.PART.INDICATOR)
+            ring.set_style_arc_color(color, lv.PART.INDICATOR)
+            ppm_label.set_style_text_color(color, 0)
+
+            ring_g1.set_style_arc_color(color, lv.PART.INDICATOR)
+            ring_g2.set_style_arc_color(color, lv.PART.INDICATOR)
+            ring_g3.set_style_arc_color(color, lv.PART.INDICATOR)
         
         bat["update"]()
 
@@ -1486,7 +1501,7 @@ def create_snake_screen(alt=False, game=True):
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
 
     ring.set_style_arc_width(2, lv.PART.INDICATOR)
-    ring.set_style_arc_color(lv.color_hex(0x55FF55), lv.PART.INDICATOR)
+    ring.set_style_arc_color(lv.color_hex(0x888888), lv.PART.INDICATOR)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
 
     # Snake game logic
