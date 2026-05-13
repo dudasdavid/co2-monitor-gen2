@@ -23,6 +23,7 @@ class ButtonHandler:
     def __init__(self, pin_num, name, index):
         self.name = name
         self.index = index
+        self.pin_num = pin_num
         self.pin = Pin(pin_num, Pin.IN, Pin.PULL_UP)
 
         self.changed = False
@@ -109,6 +110,12 @@ class ButtonHandler:
             self.long_sent = True
             await var.button_events.put((self.name, EVENT_LONG))
             log.debug("LONG press:", self.name)
+            
+            # Detect long press on power button already here,
+            # change the pin to output and keep pressing so user cannot abort the shutdown sequence 
+            if self.name == "power":
+                self.pin = Pin(self.pin_num, Pin.OUT)
+                self.pin.on()
 
 async def io_task(period = 1.0):
     # Init button handlers

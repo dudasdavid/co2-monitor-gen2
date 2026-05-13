@@ -148,8 +148,9 @@ async def audio_task():
             pass
             play_pcm_blocking(long_pcm, tail_ms = 40)
         elif event_type == var.EVENT_AUDIO_OFF:
-            await asyncio.sleep_ms(300)
+            await asyncio.sleep_ms(100)
             play_pcm_blocking(off_pcm)
+            
         else:
             pass
             play_pcm_blocking(click_pcm, tail_ms = 85)
