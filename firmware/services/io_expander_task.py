@@ -169,6 +169,12 @@ class IOExpanderHandler:
             self.long_sent[btn_name] = True
             await var.button_events.put((btn_name, EVENT_LONG))
             log.debug("LONG press:", btn_name)
+            
+            if btn_name == "power":
+                log.warning("Long press on power button, shutdown sequence started!")
+                self.pow_pin = tca6408.Pin(tca6408.EXIO5, mode=tca6408.Pin.OUT)
+                self.pow_pin.on()
+            
 
 async def io_expander_task(i2c_bus, period = 1.0):
     #Init       

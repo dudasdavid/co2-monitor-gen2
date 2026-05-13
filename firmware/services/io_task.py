@@ -114,6 +114,7 @@ class ButtonHandler:
             # Detect long press on power button already here,
             # change the pin to output and keep pressing so user cannot abort the shutdown sequence 
             if self.name == "power":
+                log.warning("Long press on power button, shutdown sequence started!")
                 self.pin = Pin(self.pin_num, Pin.OUT)
                 self.pin.on()
 
