@@ -1465,6 +1465,27 @@ def create_snake_screen(alt=False, game=True):
     title.set_angle_start(249)    # where text begins
     title.set_angle_size(90)      # span of the text
 
+    # Circular wall
+    ring = lv.arc(scr)
+    ring.remove_style_all()
+    ring.remove_flag(lv.obj.FLAG.CLICKABLE)
+    ring.set_size(240, 240)
+    ring.align(lv.ALIGN.CENTER, 0, 0)
+    ring.set_rotation(270)
+    ring.set_bg_angles(0, 360)
+    ring.set_range(0, 100)
+    ring.set_value(100)
+    ring.set_style_pad_all(0, 0)
+
+    ring.set_style_arc_width(2, lv.PART.MAIN)
+    ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
+    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
+
+    ring.set_style_arc_width(2, lv.PART.INDICATOR)
+    ring.set_style_arc_color(lv.color_hex(0x55FF55), lv.PART.INDICATOR)
+    ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
+
+    # Snake game logic
     GRID_W = 24
     GRID_H = 24
     CELL = 10
