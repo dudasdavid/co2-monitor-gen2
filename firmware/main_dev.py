@@ -242,7 +242,8 @@ async def main():
     log.info("Free RAM at startup:", int(gc.mem_free() / 1024), "kB")
     
     # 2) Immediately start jitter monitoring tool with 50ms, enable it only for debugging
-    #asyncio.create_task(asyncio_jitter_monitor(50))              # Performance ✅
+    if var.debug:
+        asyncio.create_task(asyncio_jitter_monitor(50))          # Performance ✅
     
     # 3) Import slim ui_welcome and start the welcome screen
     import ui_welcome
@@ -261,7 +262,8 @@ async def main():
     # 4.3) During log loading we can play the startup tune
     await asyncio.sleep(0.1)
     asyncio.create_task(audio_task())                            # Performance ✅
-    await asyncio.sleep(5)
+    if not var.debug:
+        await asyncio.sleep(5)
     # 4.4) Keep spawning other services
     asyncio.create_task(idle_task(1.5))                          # Performance ✅
     asyncio.create_task(backlight_task(0.1))                     # Performance ✅
