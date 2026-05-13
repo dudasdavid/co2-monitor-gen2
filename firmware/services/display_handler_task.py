@@ -13,6 +13,9 @@ async def display_handler_task(display, period = 1.0):
 
     last_rotation = None
     last_backlight_override = None
+    
+    ENTER_SIDE = 55   # rotate only after this
+    EXIT_SIDE  = 35   # return only below this
 
     #Run
     while True:
@@ -30,13 +33,30 @@ async def display_handler_task(display, period = 1.0):
             
         else:
             roll = var.sensor_data.rpy[0]
-            
-            if -90 < roll < -45:
-                target_rotation = lv.DISPLAY_ROTATION._90
-            elif 45 < roll < 90:
-                target_rotation = lv.DISPLAY_ROTATION._270
+
+            # State-based hysteresis
+            if last_rotation == lv.DISPLAY_ROTATION._90:
+                # stay rotated left until roll comes back enough
+                if roll > -EXIT_SIDE:
+                    target_rotation = lv.DISPLAY_ROTATION._0
+                else:
+                    target_rotation = lv.DISPLAY_ROTATION._90
+
+            elif last_rotation == lv.DISPLAY_ROTATION._270:
+                # stay rotated right until roll comes back enough
+                if roll < EXIT_SIDE:
+                    target_rotation = lv.DISPLAY_ROTATION._0
+                else:
+                    target_rotation = lv.DISPLAY_ROTATION._270
+
             else:
-                target_rotation = lv.DISPLAY_ROTATION._0
+                # currently normal, require stronger tilt to enter rotation
+                if roll < -ENTER_SIDE:
+                    target_rotation = lv.DISPLAY_ROTATION._90
+                elif roll > ENTER_SIDE:
+                    target_rotation = lv.DISPLAY_ROTATION._270
+                else:
+                    target_rotation = lv.DISPLAY_ROTATION._0
 
             target_backlight_override = False
         
