@@ -9,17 +9,50 @@ from logger import Logger
 # ---- Global variables ----
 import shared_variables as var
 
-log = Logger("mqtt", debug_enabled=False)
+log = Logger("mqtt", debug_enabled=True)
 
-# MQTT Parameters
-MQTT_SERVER = umqtt.config.mqtt_server
-MQTT_PORT = 1883
-MQTT_USER = umqtt.config.mqtt_username
-MQTT_PASSWORD = umqtt.config.mqtt_password
+# MQTT Parameters for LAN connection
+MQTT_SERVER_LOCAL = umqtt.config.mqtt_server_local
+MQTT_PORT_LOCAL = umqtt.config.mqtt_port_local
+MQTT_USER_LOCAL = umqtt.config.mqtt_username_local
+MQTT_PASSWORD_LOCAL = umqtt.config.mqtt_password_local
+MQTT_SSL_LOCAL = False   # set to False if using local Mosquitto MQTT broker
+MQTT_SSL_PARAMS_LOCAL = {'server_hostname': MQTT_SERVER_LOCAL}
+
+# MQTT Parameters for remote internet connection
+MQTT_SERVER_REMOTE = umqtt.config.mqtt_server_remote
+MQTT_PORT_REMOTE = umqtt.config.mqtt_port_remote
+MQTT_USER_REMOTE = umqtt.config.mqtt_username_remote
+MQTT_PASSWORD_REMOTE = umqtt.config.mqtt_password_remote
+MQTT_SSL_REMOTE = False   # set to False if using local Mosquitto MQTT broker
+MQTT_SSL_PARAMS_REMOTE = {'server_hostname': MQTT_SERVER_REMOTE}
+
+# MQTT generic parameters
 MQTT_CLIENT_ID = var.hostname.encode()
 MQTT_KEEPALIVE = 7200
-MQTT_SSL = False   # set to False if using local Mosquitto MQTT broker
-MQTT_SSL_PARAMS = {'server_hostname': MQTT_SERVER}
+
+MQTT_ENDPOINTS = [
+    {
+        "name": "Local",
+        "server": MQTT_SERVER_LOCAL,
+        "port": MQTT_PORT_LOCAL,
+        "user": MQTT_USER_LOCAL,
+        "password": MQTT_PASSWORD_LOCAL,
+        "ssl": MQTT_SSL_LOCAL,
+        "ssl_params": MQTT_SSL_PARAMS_LOCAL,
+    },
+    {
+        "name": "Remote",
+        "server": MQTT_SERVER_REMOTE,
+        "port": MQTT_PORT_REMOTE,
+        "user": MQTT_USER_REMOTE,
+        "password": MQTT_PASSWORD_REMOTE,
+        "ssl": MQTT_SSL_REMOTE,
+        "ssl_params": MQTT_SSL_PARAMS_REMOTE,
+    },
+]
+
+last_mqtt_endpoint = 0   # 0 = local first, 1 = remote first
 
 def _now_ms():
     # Prefer monotonic ticks on MicroPython
@@ -35,18 +68,55 @@ def _ms_since(t0_ms, t1_ms):
         return time.ticks_diff(t1_ms, t0_ms)
     except AttributeError:
         return t1_ms - t0_ms
-    
+
+def make_client(ep):
+    return MQTTClient(
+        client_id=MQTT_CLIENT_ID,
+        server=ep["server"],
+        port=ep["port"],
+        user=ep["user"],
+        password=ep["password"],
+        keepalive=MQTT_KEEPALIVE,
+        ssl=ep["ssl"],
+        ssl_params=ep["ssl_params"],
+    )
+
+def connect_mqtt():
+    global last_mqtt_endpoint
+
+    order = [
+        last_mqtt_endpoint,
+        1 - last_mqtt_endpoint,
+    ]
+
+    last_error = None
+
+    for idx in order:
+        ep = MQTT_ENDPOINTS[idx]
+        client = make_client(ep)
+        try:
+            log.info("Trying MQTT", ep["name"], ep["server"], ep["port"])
+            client.connect()
+            
+            last_mqtt_endpoint = idx
+            log.info("MQTT connected via", ep["name"])
+            return client, ep["name"]
+
+        except Exception as e:
+            last_error = e
+            log.warning("MQTT", ep["name"], "failed:", e)
+
+            try:
+                client.disconnect()
+            except Exception:
+                pass
+
+    raise OSError("Both MQTT endpoints failed: " + str(last_error))
+
 async def mqtt_task(period = 1.0):
     #Init
-    client = MQTTClient(client_id=MQTT_CLIENT_ID,
-                        server=MQTT_SERVER,
-                        port=MQTT_PORT,
-                        user=MQTT_USER,
-                        password=MQTT_PASSWORD,
-                        keepalive=MQTT_KEEPALIVE,
-                        ssl=MQTT_SSL,
-                        ssl_params=MQTT_SSL_PARAMS)
-
+    client = None
+    
     DISCOVERY_PREFIX = "homeassistant"
     BASE_TOPIC = "custom_sensors/" + var.hostname
 
@@ -162,10 +232,13 @@ async def mqtt_task(period = 1.0):
         await var.wifi_ready_evt.wait()
         log.debug("Successful WiFi connection event received!")
         
+        client = None
+        
         try:
             log.debug("Connecting to MQTT server...")
             await asyncio.sleep(0.1)
-            client.connect()
+            client, mqtt_name = connect_mqtt()
+            var.mqqt_server_connection = mqtt_name
             await asyncio.sleep(5)
             
             # Publish HA discovery with retain once after startup
@@ -199,11 +272,19 @@ async def mqtt_task(period = 1.0):
             log.info("Successfuly published data to MQTT server")
                 
             await asyncio.sleep(0.1)
-            log.debug("Disconnecting from MQTT server...")
-            client.disconnect()
 
         except Exception as e:
-            log.error("Exception:", e)
+            log.error("MQTT publish failed:", e)
+            var.mqqt_server_connection = "Server error"
+            
+        finally:
+            if client:
+                try:
+                    log.debug("Disconnecting from MQTT server...")
+                    client.disconnect()
+                except Exception:
+                    log.error("Disconnecting from MQTT server failed!")
+                    pass
 
         await asyncio.sleep(period)
         
