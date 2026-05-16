@@ -138,6 +138,7 @@ ssid_save_successful = False
 wifi_ip = None
 wifi_sleep = False
 sleep_till_next_connection = 0
+mqqt_server_connection = "Disconnected"
 
 # screens are main screens, alt screens are a second page of screens
 screens = []

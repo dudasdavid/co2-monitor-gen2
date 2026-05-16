@@ -1337,7 +1337,7 @@ def create_sensor_table(alt=False):
     page.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
     table = lv.table(page)
-    table.set_size(SCREEN_W, 23*40+100)
+    table.set_size(SCREEN_W, 24*30+100)
     table.align(lv.ALIGN.TOP_LEFT, 0, 0)
 
     # ✅ Make sure table itself does NOT scroll -> removes 2nd scrollbar
@@ -1350,13 +1350,22 @@ def create_sensor_table(alt=False):
     table.set_style_pad_left(0, 0)
     table.set_style_pad_right(0, 0)
 
+    # tighter table cells
+    table.set_style_pad_left(5, lv.PART.ITEMS)
+    table.set_style_pad_right(0, lv.PART.ITEMS)
+    table.set_style_pad_top(8, lv.PART.ITEMS)
+    table.set_style_pad_bottom(8, lv.PART.ITEMS)
+
+    # optional: align text tighter
+    table.set_style_text_align(lv.TEXT_ALIGN.LEFT, lv.PART.ITEMS)
+
     # 3 columns and 18 rows
     table.set_column_count(3)
-    table.set_row_count(23)
+    table.set_row_count(24)
 
-    table.set_column_width(0, 5)
+    table.set_column_width(0, 10)
     table.set_column_width(1, 110)
-    table.set_column_width(2, 125)
+    table.set_column_width(2, 120)
 
     # Static labels
     table.set_cell_value(0, 1, "Temp [°C]")
@@ -1380,8 +1389,9 @@ def create_sensor_table(alt=False):
     table.set_cell_value(18, 1, "Local time")
     table.set_cell_value(19, 1, "AP")
     table.set_cell_value(20, 1, "WiFi")
-    table.set_cell_value(21, 1, "/ storage")
-    table.set_cell_value(22, 1, "RAM")
+    table.set_cell_value(21, 1, "MQTT server")
+    table.set_cell_value(22, 1, "/ storage")
+    table.set_cell_value(23, 1, "RAM")
     
 
     # Styles
@@ -1446,8 +1456,10 @@ def create_sensor_table(alt=False):
         else:
             table.set_cell_value(20, 2, "Disabled")
 
-        table.set_cell_value(21, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
-        table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
+        table.set_cell_value(21, 2, var.mqqt_server_connection)
+
+        table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
+        table.set_cell_value(23, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
 
     lv.timer_create(table_update_cb, 1000, None)
 
