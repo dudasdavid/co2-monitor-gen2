@@ -1,7 +1,7 @@
 import uasyncio as asyncio
 from logger import Logger
 import time
-import ui
+from ui import ui_generic as ui
 from lv_port import init
 
 # ---- Global variables ----

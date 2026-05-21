@@ -251,11 +251,16 @@ async def main():
         asyncio.create_task(asyncio_jitter_monitor(50))          # Performance ✅
     
     # 4) Import slim ui_welcome and start the welcome screen
-    import ui_welcome
+    from ui import ui_welcome
     ui_welcome.create_welcome_screen()                           # Performance ✅
     
     # 4.1) Import the rest of UI only here, might take some time
-    import ui
+    from ui import ui_generic
+    from ui import ui_chart
+    from ui import ui_games
+    from ui import ui_sensors
+    from ui import ui_settings
+    from ui import ui_table
     
     # 5) Start loading history from log with frequent yielding
     asyncio.create_task(history_task(2))                         # Performance ✅
@@ -289,16 +294,16 @@ async def main():
     asyncio.create_task(mqtt_task(10))                           # Performance ✅
     
     # 6) start UI  
-    ui.create_sensor_table(alt = True)                           # Performance ✅
-    ui.create_co2_screen()                                       # Performance ✅
-    ui.create_co2_chart_screen()                                 # Performance ✅
-    ui.create_sensor_screen()                                    # Performance ✅
-    ui.create_timezone_screen(alt = True)                        # Performance ✅
-    ui.create_ap_screen(alt = True)                              # Performance ✅
-    ui.create_roll_indicator_screen(alt = True)                  # Performance ✅
-    var.snake_screen = ui.create_snake_screen(game = True)       # Performance ✅
-    #ui.create_dummy_screen()
-    ui.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN) # start with screen 0
+    ui_table.create_sensor_table(alt = True)                     # Performance ✅
+    ui_sensors.create_co2_screen()                               # Performance ✅
+    ui_chart.create_co2_chart_screen()                           # Performance ✅
+    ui_sensors.create_sensor_screen()                            # Performance ✅
+    ui_settings.create_timezone_screen(alt = True)               # Performance ✅
+    ui_settings.create_ap_screen(alt = True)                     # Performance ✅
+    ui_settings.create_roll_indicator_screen(alt = True)         # Performance ✅
+    var.snake_screen = ui_games.create_snake_screen(game = True) # Performance ✅
+    #ui_generic.create_dummy_screen()
+    ui_generic.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN) # start with screen 0
 
     log.info("Free RAM after UI:", int(gc.mem_free() / 1024), "kB")
 
