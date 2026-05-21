@@ -206,8 +206,6 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
         
     except Exception as e:
         log.error("Failed to append sensor row:", e)
-        
-        sd_card_recovery()
 
 async def _load_co2_history_from_log(path, yield_every=10):
     """
