@@ -76,6 +76,10 @@ async def sensor_task(period = 1.0):
     _SEN_I2C_FREQ = const(100000)
     i2c1_bus = i2c.I2C.Bus(host=1, scl=_SEN_SCL, sda=_SEN_SDA, freq=_SEN_I2C_FREQ, use_locks=False)
     log.info("Scan result:", i2c1_bus.scan())
+
+    veml7700 = None
+    scd4x = None
+    ds3231 = None
     
     # Initialize the VEML7700 Lux sensor
     try:
@@ -101,7 +105,7 @@ async def sensor_task(period = 1.0):
         except:
             log.error("DS3231 cannot be initialized!")
 
-        if not var.ntp_time_synchronized:
+        if ds3231 is not None and not var.ntp_time_synchronized:
             rtc = RTC()
             
             # MicroPython RTC datetime format:
@@ -149,71 +153,75 @@ async def sensor_task(period = 1.0):
               
             var.system_data.i2c_status_unknown = devices
 
-        try:
-            lux = veml7700.read_lux()
-            #log.debug("[VEML7700] Lux", lux)
-            await asyncio.sleep_ms(1)
-            
-            if lux is not None:
-                lux_cal = 1.0 * lux - 0
-                var.sensor_data.lux_veml7700 = lux_cal
-            else:
-                var.sensor_data.lux_veml7700 = 0
-        except:
-            log.error("VEML7700 communication error")
+        if veml7700 is not None:
+            try:
+                lux = veml7700.read_lux()
+                #log.debug("[VEML7700] Lux", lux)
+                await asyncio.sleep_ms(1)
+                
+                if lux is not None:
+                    lux_cal = 1.0 * lux - 0
+                    var.sensor_data.lux_veml7700 = lux_cal
+                else:
+                    var.sensor_data.lux_veml7700 = 0
+            except:
+                log.error("VEML7700 communication error")
         
-        try:
-            co2 = scd4x.co2
-            await asyncio.sleep_ms(1)
-            temp = scd4x.temperature
-            await asyncio.sleep_ms(1)
-            rh = scd4x.relative_humidity
-            await asyncio.sleep_ms(1)
-            #log.debug("[SCD41] CO2:", co2)
-            #log.debug("[SCD41] temperature:", temp)
-            #log.debug("[SCD41] humidity:", rh)
-            var.sensor_data.co2_scd41 = co2 if co2 is not None else 0
-            
-            if temp is not None:
-                temp_cal = var.temp_cal_A * temp - var.temp_cal_B
-                var.sensor_data.temp_scd41 = temp_cal
-            else:
-                temp_cal = 0.69
-                var.sensor_data.temp_scd41 = temp_cal
-            
-            if rh is not None:
-                rh_cal = compensate_humidity(rh, temp, temp_cal)
-                var.sensor_data.humidity_scd41 = rh_cal
-            else:
-                var.sensor_data.humidity_scd41 = 0
-            
-        except:
-            log.error("SCD41 communication error")
+        if scd4x is not None:
+            try:
+                co2 = scd4x.co2
+                await asyncio.sleep_ms(1)
+                temp = scd4x.temperature
+                await asyncio.sleep_ms(1)
+                rh = scd4x.relative_humidity
+                await asyncio.sleep_ms(1)
+                #log.debug("[SCD41] CO2:", co2)
+                #log.debug("[SCD41] temperature:", temp)
+                #log.debug("[SCD41] humidity:", rh)
+                var.sensor_data.co2_scd41 = co2 if co2 is not None else 0
+                
+                if temp is not None:
+                    temp_cal = var.temp_cal_A * temp - var.temp_cal_B
+                    var.sensor_data.temp_scd41 = temp_cal
+                else:
+                    temp_cal = 0.69
+                    var.sensor_data.temp_scd41 = temp_cal
+                
+                if rh is not None and temp is not None:
+                    rh_cal = compensate_humidity(rh, temp, temp_cal)
+                    var.sensor_data.humidity_scd41 = rh_cal
+                else:
+                    var.sensor_data.humidity_scd41 = 0
+                
+            except:
+                log.error("SCD41 communication error")
 
 
-        if var.hw_variant == "spi" and i % 10 == 0:
-            rtc_time = ds3231.datetime()
-            await asyncio.sleep_ms(1)
-            rtc_temp = ds3231.temperature()
-            await asyncio.sleep_ms(1)
-            #log.debug("DS3231 Time:", rtc_time)
-            #log.debug("DS3231 Temperature:", rtc_temp)
-            
-            var.system_data.time_rtc = rtc_time
-            var.sensor_data.temp_ds3231 = rtc_temp
-            
-            #log.debug("NTP time synchronized:", var.ntp_time_synchronized)
-            if var.ntp_time_synchronized:
-                #log.debug("RTC time:", var.system_data.time_rtc)
-                #log.debug("NTP time:", time.localtime())
-                if is_time_diff_over_threshold(time.localtime(), var.system_data.time_rtc, 60):
-                    log.warning("RTC time needs to be updated from NTP time!")
-                    log.warning("RTC time:", var.system_data.time_rtc)
-                    log.warning("NTP time:", time.localtime())
-                    ds3231.datetime(time.localtime())
+        if ds3231 is not None and var.hw_variant == "spi" and i % 10 == 0:
+            try:
+                rtc_time = ds3231.datetime()
+                await asyncio.sleep_ms(1)
+                rtc_temp = ds3231.temperature()
+                await asyncio.sleep_ms(1)
+                #log.debug("DS3231 Time:", rtc_time)
+                #log.debug("DS3231 Temperature:", rtc_temp)
+                
+                var.system_data.time_rtc = rtc_time
+                var.sensor_data.temp_ds3231 = rtc_temp
+                
+                #log.debug("NTP time synchronized:", var.ntp_time_synchronized)
+                if var.ntp_time_synchronized:
+                    #log.debug("RTC time:", var.system_data.time_rtc)
+                    #log.debug("NTP time:", time.localtime())
+                    if is_time_diff_over_threshold(time.localtime(), var.system_data.time_rtc, 60):
+                        log.warning("RTC time needs to be updated from NTP time!")
+                        log.warning("RTC time:", var.system_data.time_rtc)
+                        log.warning("NTP time:", time.localtime())
+                        ds3231.datetime(time.localtime())
+            except:
+                log.error("DS3231 communication error")
 
 
         var.system_data.sensor_task_timestamp = time.time()
         
         await asyncio.sleep(period)
-
