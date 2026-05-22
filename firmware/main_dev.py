@@ -204,6 +204,7 @@ def init_display_spi():
     display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
 
     # Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
+    global i2c_bus
     i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
     touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)
 
