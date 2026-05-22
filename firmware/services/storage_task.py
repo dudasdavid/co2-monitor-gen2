@@ -126,6 +126,10 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
     """
     Append one sensor row and trim to last `limit_rows` data lines.
     """
+    csv_path = path + ".csv"
+    tmp_path = path + ".tmp"
+    bak_path = path + ".bak"
+
     # Build CSV line
     timestamp = localtime_with_offset()
     ts_str = _format_timestamp(timestamp)
@@ -152,7 +156,7 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
     try:
         # Read all lines
         try:
-            f = open(path + ".csv", "r")
+            f = open(csv_path, "r")
             lines = f.readlines()
             f.close()
         except OSError:
@@ -178,30 +182,44 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
 
         # Write everything back
         line_counter = 0
-        f = open(path + ".tmp", "w")
-        f.write(header)
-        for l in data_lines:
-            f.write(l)
-            
-            line_counter += 1
-            if line_counter % yield_every == 0:
-                await asyncio.sleep_ms(10)
-            
-            
-        f.close()
+        f = None
+        try:
+            f = open(tmp_path, "w")
+            f.write(header)
+            for l in data_lines:
+                f.write(l)
+                
+                line_counter += 1
+                if line_counter % yield_every == 0:
+                    await asyncio.sleep_ms(10)
+        finally:
+            if f is not None:
+                f.close()
 
         log.info("Log row created, total rows:", len(data_lines))
-        
-        os.rename(path + ".csv", path + ".bak")
-        
-        log.debug("Log backup done")
-        
-        os.rename(path + ".tmp", path + ".csv")
-        
+
+        _safe_remove(bak_path)
+
+        if _file_exists(csv_path):
+            if not _safe_rename(csv_path, bak_path):
+                log.error("Failed to backup log file:", csv_path)
+                _safe_remove(tmp_path)
+                return
+
+            log.debug("Log backup done")
+
+        if not _safe_rename(tmp_path, csv_path):
+            log.error("Failed to replace log file:", csv_path)
+
+            if _file_exists(bak_path) and _safe_rename(bak_path, csv_path):
+                log.warning("Restored log file from backup:", csv_path)
+
+            return
+
         log.debug("New log saved")
-        
-        os.remove(path + ".bak")
-        
+
+        _safe_remove(bak_path)
+
         log.debug("Backup log deleted")
         
     except Exception as e:
