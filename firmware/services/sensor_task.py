@@ -1,3 +1,4 @@
+from micropython import const
 import uasyncio as asyncio
 import time
 import i2c
