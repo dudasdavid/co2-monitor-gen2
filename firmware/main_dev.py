@@ -34,6 +34,7 @@ from logger import Logger
 import shared_variables as var
 
 i2c_bus = None
+lv_task_handler = None
 # Default parameters
 _WIDTH = const(240)
 _HEIGHT = const(240)
@@ -144,8 +145,9 @@ def init_display_i80():
 
     var.indev = indev
 
-    # No idea what is exactly this
-    th = task_handler.TaskHandler()
+    # Start LVGL's periodic handler for redraws, input, animations, and timers.
+    global lv_task_handler
+    lv_task_handler = task_handler.TaskHandler()
     
     return display
 
@@ -216,8 +218,9 @@ def init_display_spi():
 
     var.indev = indev
 
-    # No idea what is exactly this
-    th = task_handler.TaskHandler()
+    # Start LVGL's periodic handler for redraws, input, animations, and timers.
+    global lv_task_handler
+    lv_task_handler = task_handler.TaskHandler()
     
     return display
 
