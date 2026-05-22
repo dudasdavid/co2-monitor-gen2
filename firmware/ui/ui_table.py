@@ -123,6 +123,16 @@ def create_sensor_table(alt=False):
     # Remove outside borders
     table.set_style_border_width(0, lv.PART.MAIN)
 
+    cell_cache = {}
+
+    def set_cell_if_changed(row, col, value):
+        key = (row, col)
+        if cell_cache.get(key) == value:
+            return
+
+        cell_cache[key] = value
+        table.set_cell_value(row, col, value)
+
     def table_update_cb(task):
         if not (
             var.selected_alt and
@@ -130,60 +140,60 @@ def create_sensor_table(alt=False):
         ):
             return
 
-        table.set_cell_value(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))
+        set_cell_if_changed(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))
         if var.hw_variant == "i80":
-            table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
+            set_cell_if_changed(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
         elif var.hw_variant == "spi":
-            table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_ds3231))
-        table.set_cell_value(2, 2, "{:.1f}".format(var.sensor_data.humidity_scd41))
-        table.set_cell_value(3, 2, "{}".format(int(var.sensor_data.co2_scd41)))
-        table.set_cell_value(4, 2, "{:.2f}".format(var.sensor_data.lux_veml7700))
-        table.set_cell_value(5, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[0]))
-        table.set_cell_value(6, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[1]))
-        table.set_cell_value(7, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[2]))
-        table.set_cell_value(8, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[0]))
-        table.set_cell_value(9, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[1]))
-        table.set_cell_value(10, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[2]))
-        table.set_cell_value(11, 2, "{:.2f}".format(var.system_data.bat_volt))
-        table.set_cell_value(12, 2, "{:.1f}".format(var.system_data.bat_percentage))
-        table.set_cell_value(13, 2, "{}".format(var.system_data.usb_connected))
-        table.set_cell_value(14, 2, "{}".format(var.system_data.buttons))
+            set_cell_if_changed(1, 2, "{:.1f}".format(var.sensor_data.temp_ds3231))
+        set_cell_if_changed(2, 2, "{:.1f}".format(var.sensor_data.humidity_scd41))
+        set_cell_if_changed(3, 2, "{}".format(int(var.sensor_data.co2_scd41)))
+        set_cell_if_changed(4, 2, "{:.2f}".format(var.sensor_data.lux_veml7700))
+        set_cell_if_changed(5, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[0]))
+        set_cell_if_changed(6, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[1]))
+        set_cell_if_changed(7, 2, "{:.2f}".format(var.sensor_data.acc_qmi8658c[2]))
+        set_cell_if_changed(8, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[0]))
+        set_cell_if_changed(9, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[1]))
+        set_cell_if_changed(10, 2, "{:.2f}".format(var.sensor_data.gyro_qmi8658c[2]))
+        set_cell_if_changed(11, 2, "{:.2f}".format(var.system_data.bat_volt))
+        set_cell_if_changed(12, 2, "{:.1f}".format(var.system_data.bat_percentage))
+        set_cell_if_changed(13, 2, "{}".format(var.system_data.usb_connected))
+        set_cell_if_changed(14, 2, "{}".format(var.system_data.buttons))
 
         timestamp = var.system_data.time_rtc
         date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
         time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
-        table.set_cell_value(15, 2, date_str)
-        table.set_cell_value(16, 2, time_str)
+        set_cell_if_changed(15, 2, date_str)
+        set_cell_if_changed(16, 2, time_str)
 
 
         timestamp = ui.localtime_with_offset(var.TZ_OFFSET)
         date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
         time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
-        table.set_cell_value(17, 2, date_str)
-        table.set_cell_value(18, 2, time_str)
+        set_cell_if_changed(17, 2, date_str)
+        set_cell_if_changed(18, 2, time_str)
 
         if var.ap_enabled:
-            table.set_cell_value(19, 2, "On: {}s".format(int(var.ap_disable_timer)))
+            set_cell_if_changed(19, 2, "On: {}s".format(int(var.ap_disable_timer)))
         elif var.ap_request:
-            table.set_cell_value(19, 2, "Requested...")
+            set_cell_if_changed(19, 2, "Requested...")
         else:
-            table.set_cell_value(19, 2, "Disabled")
+            set_cell_if_changed(19, 2, "Disabled")
             
         if var.wifi_connected:
-            table.set_cell_value(20, 2, var.wifi_ip)
+            set_cell_if_changed(20, 2, var.wifi_ip)
         elif var.ap_enabled:
-            table.set_cell_value(20, 2, "Disabled")
+            set_cell_if_changed(20, 2, "Disabled")
         elif var.wifi_connecting:
-            table.set_cell_value(20, 2, "Connecting...")
+            set_cell_if_changed(20, 2, "Connecting...")
         elif var.wifi_sleep:
-            table.set_cell_value(20, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
+            set_cell_if_changed(20, 2, "Sleep: "+str(int(var.sleep_till_next_connection)))
         else:
-            table.set_cell_value(20, 2, "Disabled")
+            set_cell_if_changed(20, 2, "Disabled")
 
-        table.set_cell_value(21, 2, var.system_data.mqtt_server_connection)
+        set_cell_if_changed(21, 2, var.system_data.mqtt_server_connection)
 
-        table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
-        table.set_cell_value(23, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
+        set_cell_if_changed(22, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
+        set_cell_if_changed(23, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))
 
     lv.timer_create(table_update_cb, 1000, None)
 
