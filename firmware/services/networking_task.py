@@ -321,7 +321,7 @@ def ap_start(ap):
 
     var.ap_enabled = True
 
-def ap_stop(ap):
+async def ap_stop(ap):
     log.info("Disabling access point...")
     await asyncio.sleep_ms(100)
     #gc.collect()
