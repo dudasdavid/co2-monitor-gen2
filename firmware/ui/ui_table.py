@@ -124,6 +124,12 @@ def create_sensor_table(alt=False):
     table.set_style_border_width(0, lv.PART.MAIN)
 
     def table_update_cb(task):
+        if not (
+            var.selected_alt and
+            var.screen_names_alt[var.current_idx_alt] == "Sensor table"
+        ):
+            return
+
         table.set_cell_value(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))
         if var.hw_variant == "i80":
             table.set_cell_value(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
@@ -184,7 +190,7 @@ def create_sensor_table(alt=False):
     # Swipe on screen (fine)
     scr.add_event_cb(ui.swipe_event_cb, lv.EVENT.ALL, None)
 
-    screen_name = "Sensors"
+    screen_name = "Sensor table"
     if not alt:
         var.screens.append(scr)
         var.screen_names.append(screen_name)
@@ -192,4 +198,3 @@ def create_sensor_table(alt=False):
         var.screens_alt.append(scr)
         var.screen_names_alt.append(screen_name)
     return scr
-
