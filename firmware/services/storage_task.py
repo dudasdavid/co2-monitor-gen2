@@ -122,15 +122,7 @@ def _ensure_log_file(path):
     except Exception as e:
         log.error("Failed to create log file:", csv, e)
 
-async def _append_sensor_row(path, limit_rows, yield_every=20):
-    """
-    Append one sensor row and trim to last `limit_rows` data lines.
-    """
-    csv_path = path + ".csv"
-    tmp_path = path + ".tmp"
-    bak_path = path + ".bak"
-
-    # Build CSV line
+def _make_sensor_row():
     timestamp = localtime_with_offset()
     ts_str = _format_timestamp(timestamp)
 
@@ -139,12 +131,13 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
         temp2 = _safe(var.sensor_data.temp_qmi8658c)
     elif var.hw_variant == "spi":
         temp2 = _safe(var.sensor_data.temp_ds3231)
+    else:
+        temp2 = 0
     hum = _safe(var.sensor_data.humidity_scd41)
     co2 = int(_safe(var.sensor_data.co2_scd41))
     lux = _safe(var.sensor_data.lux_veml7700)
 
-    # Format as strings (adjust precision as you like)
-    row = "{},{:.2f},{:.2f},{:.2f},{:d},{:.2f}\n".format(
+    return "{},{:.2f},{:.2f},{:.2f},{:d},{:.2f}\n".format(
         ts_str,
         temp,
         temp2,
@@ -153,42 +146,68 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
         lux,
     )
 
+
+async def _append_sensor_row(path):
+    """
+    Append one sensor row without rewriting the whole log file.
+    """
     try:
-        # Read all lines
-        try:
-            f = open(csv_path, "r")
-            lines = f.readlines()
-            f.close()
-        except OSError:
-            # If file doesn't exist for some reason, recreate with header
-            lines = []
-            header = "timestamp,temperature,temperature2,humidity,co2,lux\n"
-            lines.append(header)
+        with open(path + ".csv", "a") as f:
+            f.write(_make_sensor_row())
 
-        if not lines:
-            header = "timestamp,temperature,temperature2,humidity,co2,lux\n"
-            data_lines = []
-        else:
-            header = lines[0]
-            data_lines = lines[1:]
+        return True
+    except Exception as e:
+        log.error("Failed to append sensor row:", e)
+        return False
 
-        data_lines.append(row)
 
-        # Keep only newest `limit_rows` data lines
-        log.info("Log length:", len(data_lines))
-        if len(data_lines) > limit_rows:
-            data_lines = data_lines[-limit_rows:]
-            log.warning("Log length is longer than", limit_rows, ", log size was decreased to", len(data_lines))
+async def _count_log_rows(path, yield_every=50):
+    """
+    Count data rows in the CSV, excluding the header.
+    """
+    try:
+        f = open(path + ".csv", "r")
+    except OSError:
+        log.warning("No log file found while counting rows:", path + ".csv")
+        return 0
 
-        # Write everything back
+    try:
+        header = f.readline()
+        if header != CSV_HEADER:
+            log.warning("Log file has invalid header while counting rows")
+            return 0
+
+        rows = 0
+        while True:
+            line = f.readline()
+            if not line:
+                break
+
+            if line.strip():
+                rows += 1
+
+            if rows % yield_every == 0:
+                await asyncio.sleep_ms(10)
+
+        return rows
+    finally:
+        f.close()
+
+
+async def _replace_log_rows(path, data_lines, yield_every=20):
+    csv_path = path + ".csv"
+    tmp_path = path + ".tmp"
+    bak_path = path + ".bak"
+
+    try:
         line_counter = 0
         f = None
         try:
             f = open(tmp_path, "w")
-            f.write(header)
+            f.write(CSV_HEADER)
             for l in data_lines:
                 f.write(l)
-                
+
                 line_counter += 1
                 if line_counter % yield_every == 0:
                     await asyncio.sleep_ms(10)
@@ -221,9 +240,55 @@ async def _append_sensor_row(path, limit_rows, yield_every=20):
         _safe_remove(bak_path)
 
         log.debug("Backup log deleted")
+        return True
         
     except Exception as e:
-        log.error("Failed to append sensor row:", e)
+        log.error("Failed to replace log rows:", e)
+        return False
+
+
+async def _compact_log(path, keep_rows, yield_every=20):
+    """
+    Rewrite the log file, keeping only the newest `keep_rows` data rows.
+    """
+    try:
+        f = open(path + ".csv", "r")
+    except OSError:
+        log.warning("No log file found while compacting:", path + ".csv")
+        return 0
+
+    try:
+        header = f.readline()
+        if header != CSV_HEADER:
+            log.warning("Log file has invalid header while compacting")
+            return 0
+
+        data_lines = []
+        line_counter = 0
+
+        while True:
+            line = f.readline()
+            if not line:
+                break
+
+            if line.strip():
+                data_lines.append(line)
+
+            line_counter += 1
+            if line_counter % yield_every == 0:
+                await asyncio.sleep_ms(10)
+
+    finally:
+        f.close()
+
+    if len(data_lines) > keep_rows:
+        data_lines = data_lines[-keep_rows:]
+
+    if await _replace_log_rows(path, data_lines, yield_every):
+        log.warning("Compacted log file to", len(data_lines), "rows")
+        return len(data_lines)
+
+    return await _count_log_rows(path)
 
 async def _load_co2_history_from_log(path, yield_every=10):
     """
@@ -360,6 +425,9 @@ async def storage_task(period = 1.0):
 
     # We want 7 days * 24h * 12 samples/h (5 min) = 2016 rows
     MAX_ROWS = 7 * 24 * 12   # data rows (excluding header)
+    COMPACT_MARGIN = 12      # Allow 1 extra hour before rewriting the file
+    row_count = await _count_log_rows(log_file_path)
+    log.info("Current log rows:", row_count)
 
     # Accumulator for 5-minute interval
     save_interval_s = 5 * 60  # 300 seconds
@@ -372,7 +440,13 @@ async def storage_task(period = 1.0):
         elapsed += period
         if elapsed >= save_interval_s:
             elapsed = 0.0
-            await _append_sensor_row(log_file_path, MAX_ROWS)
+            if await _append_sensor_row(log_file_path):
+                row_count += 1
+                log.info("Log row created, total rows:", row_count)
+
+                if row_count > MAX_ROWS + COMPACT_MARGIN:
+                    log.warning("Log length is longer than", MAX_ROWS + COMPACT_MARGIN, ", compacting")
+                    row_count = await _compact_log(log_file_path, MAX_ROWS)
 
         var.system_data.storage_task_timestamp = time.time()
 
