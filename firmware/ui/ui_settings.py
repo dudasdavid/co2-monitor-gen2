@@ -223,7 +223,7 @@ def create_ap_screen(alt=False):
     # Swipe support
     scr.add_event_cb(ui.swipe_event_cb, lv.EVENT.ALL, None)
 
-    screen_name = "Acces Point"
+    screen_name = "Access Point"
     if not alt:
         var.screens.append(scr)
         var.screen_names.append(screen_name)

@@ -97,7 +97,7 @@ def init_display_i80():
         data7=_LCD_D7
     )
 
-    # Set a big enough buffer to have smooth experiance (in expense of RAM)
+    # Set a big enough buffer to have smooth experience (in expense of RAM)
     fb1 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
     fb2 = display_bus.allocate_framebuffer(_BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA)
 
@@ -131,7 +131,7 @@ def init_display_i80():
     display.init()
     display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
 
-    # Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
+    # Initialize I2C bus that has the touch controller (shared with IMU and IO expander)
     global i2c_bus
     i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
     touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)
@@ -203,7 +203,7 @@ def init_display_spi():
     display.init()
     display.set_backlight(1) # It can be only 0 = OFF or 1 = ON, no dimming in display driver
 
-    # Initialize I2C bus that has the touch controlelr (shared with IMU and IO expander)
+    # Initialize I2C bus that has the touch controller (shared with IMU and IO expander)
     global i2c_bus
     i2c_bus = i2c.I2C.Bus(host=0, scl=_SCL, sda=_SDA, freq=_I2C_FREQ, use_locks=False)
     touch_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=cst816s.I2C_ADDR, reg_bits=cst816s.BITS)

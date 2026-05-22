@@ -269,7 +269,7 @@ async def mqtt_task(period = 1.0):
                     low_battery = 1
                 client.publish(BASE_TOPIC+"/low_battery", str(low_battery))
                 
-            log.info("Successfuly published data to MQTT server")
+            log.info("Successfully published data to MQTT server")
                 
             await asyncio.sleep(0.1)
 
