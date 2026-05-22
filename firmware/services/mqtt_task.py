@@ -243,8 +243,8 @@ async def mqtt_task(period = 1.0):
             
             # Publish HA discovery with retain once after startup
             if var.first_connect:
-                var.first_connect = False
                 publish_discovery(client)
+                var.first_connect = False
             
             if var.scd41_co2_detected is not None:
                 client.publish(BASE_TOPIC+"/co2_detected", str(var.scd41_co2_detected))
