@@ -174,7 +174,7 @@ def create_sensor_table(alt=False):
         else:
             table.set_cell_value(20, 2, "Disabled")
 
-        table.set_cell_value(21, 2, var.mqqt_server_connection)
+        table.set_cell_value(21, 2, var.system_data.mqtt_server_connection)
 
         table.set_cell_value(22, 2, "{:.1f} / {}MB".format(var.system_data.used_space_flash/1024.0, int(var.system_data.total_space_flash/1024)))
         table.set_cell_value(23, 2, "{:.1f} / {}MB".format(var.system_data.used_heap/1024.0, int(var.system_data.total_heap/1024)))

@@ -238,7 +238,7 @@ async def mqtt_task(period = 1.0):
             log.debug("Connecting to MQTT server...")
             await asyncio.sleep(0.1)
             client, mqtt_name = connect_mqtt()
-            var.mqqt_server_connection = mqtt_name
+            var.system_data.mqtt_server_connection = mqtt_name
             await asyncio.sleep(5)
             
             # Publish HA discovery with retain once after startup
@@ -275,7 +275,7 @@ async def mqtt_task(period = 1.0):
 
         except Exception as e:
             log.error("MQTT publish failed:", e)
-            var.mqqt_server_connection = "Server error"
+            var.system_data.mqtt_server_connection = "Server error"
             
         finally:
             if client:

@@ -46,9 +46,6 @@ class SimpleQueue:
 button_events = SimpleQueue()
 audio_events = SimpleQueue()
 
-async def post_event(ev):
-    await events.put(ev)
-
 class SensorData:
     def __init__(self):
         self.temp_scd41 = 6.9
@@ -68,7 +65,7 @@ class SystemData:
         self.time_rtc = [2001, 2, 3, 12, 9, 12, 4, 69]
         self.status_wifi = "Not Connected"
         self.status_ap = "Not Connected"
-        self.status_sd = "Offline"
+        self.mqtt_server_connection = "Disconnected"
         self.total_space_flash = 690
         self.used_space_flash = 69
         self.total_space_sd = 6900
@@ -138,7 +135,6 @@ ssid_save_successful = False
 wifi_ip = None
 wifi_sleep = False
 sleep_till_next_connection = 0
-mqqt_server_connection = "Disconnected"
 
 # screens are main screens, alt screens are a second page of screens
 screens = []
