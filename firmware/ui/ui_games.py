@@ -134,6 +134,9 @@ def create_snake_screen(alt=False, game=True):
     def snake_tick(timer):
         nonlocal snake, food
 
+        if not ui.is_screen_active("Snake", "game"):
+            return
+
         hx, hy = snake[0]
         nx = hx + direction[0]
         ny = hy + direction[1]

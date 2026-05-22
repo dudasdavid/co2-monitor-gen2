@@ -247,6 +247,8 @@ def create_co2_chart_screen(alt=False):
     label.align(lv.ALIGN.TOP_MID, 0, 8)
     
     def update_co2_chart(timer):
+        if not ui.is_screen_active("CO2 chart"):
+            return
         
         value = int(var.sensor_data.co2_scd41)
         

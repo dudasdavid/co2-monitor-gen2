@@ -134,10 +134,7 @@ def create_sensor_table(alt=False):
         table.set_cell_value(row, col, value)
 
     def table_update_cb(task):
-        if not (
-            var.selected_alt and
-            var.screen_names_alt[var.current_idx_alt] == "Sensor table"
-        ):
+        if not ui.is_screen_active("Sensor table", "alt"):
             return
 
         set_cell_if_changed(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))

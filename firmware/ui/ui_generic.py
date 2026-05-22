@@ -26,6 +26,29 @@ def localtime_with_offset(offset_sec=var.TZ_OFFSET):
     # convert back to tuple
     return time.localtime(local_epoch)
 
+def is_screen_active(name, group="normal"):
+    if group == "alt":
+        return (
+            var.selected_alt and
+            not var.selected_game and
+            len(var.screen_names_alt) > 0 and
+            var.screen_names_alt[var.current_idx_alt] == name
+        )
+
+    if group == "game":
+        return (
+            var.selected_game and
+            len(var.screen_names_game) > 0 and
+            var.screen_names_game[var.current_idx_game] == name
+        )
+
+    return (
+        not var.selected_alt and
+        not var.selected_game and
+        len(var.screen_names) > 0 and
+        var.screen_names[var.current_idx] == name
+    )
+
 # ---- LVGL helper functions ----
 def show_screen(idx, lv_animation):
     """Load screen by index (wrap around)."""

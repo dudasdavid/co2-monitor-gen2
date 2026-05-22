@@ -193,6 +193,9 @@ def create_sensor_screen(alt=False):
     # Refresh callback
     # -----------------------------
     def refresh_cb(timer):
+        if not ui.is_screen_active("Sensors"):
+            return
+
         try:
             co2 = int(var.sensor_data.co2_scd41)
         except:
@@ -368,6 +371,9 @@ def create_co2_screen(alt=False):
     }
     
     def set_co2_cb(t):
+        if not ui.is_screen_active("CO2"):
+            return
+
         value = int(var.sensor_data.co2_scd41)
 
         if value < 1000:

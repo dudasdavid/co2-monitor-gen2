@@ -129,6 +129,9 @@ def create_roll_indicator_screen(alt=False):
 
     # Periodic update timer
     def timer_cb(timer):
+        if not ui.is_screen_active("Roll", "alt"):
+            return
+
         update_screen()
 
     lv.timer_create(timer_cb, 100, None)
@@ -210,6 +213,9 @@ def create_ap_screen(alt=False):
 
     # Periodic checker
     def ap_timer_cb(timer):
+        if not ui.is_screen_active("Access Point", "alt"):
+            return
+
         try:
             update_button_state()
         except Exception as e:
