@@ -1,4 +1,5 @@
 import uasyncio as asyncio
+from micropython import const
 from logger import Logger
 import time
 from machine import Pin, PWM

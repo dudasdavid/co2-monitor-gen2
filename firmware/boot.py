@@ -17,6 +17,7 @@ def log_exception(exc):
         pass
 
 try:
+    from micropython import const
     from machine import Pin
     import neopixel
 
