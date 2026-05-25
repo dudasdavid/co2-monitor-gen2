@@ -1,8 +1,5 @@
 from lv_port import init
 
-# ---- Global variables ----
-import shared_variables as var
-
 def create_welcome_screen():
     
     lv = init()
@@ -13,7 +10,7 @@ def create_welcome_screen():
     #fs_driver.fs_register(fs_drv, 'S')
     
     # Use an binary image converted by https://lvgl.io/tools/imageconverter
-    with open("/images/welcome.bin", "rb") as f:
+    with open("images/welcome.bin", "rb") as f:
         welcome_buf = f.read()
         
     # Create an image header for the binary image
