@@ -8,7 +8,10 @@ import math
 from ui import ui_generic as ui
 
 # ---- Global variables ----
-import shared_variables as var
+if ui.SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 def create_sensor_screen(alt=False):
     lv = init()
@@ -193,7 +196,7 @@ def create_sensor_screen(alt=False):
     # Refresh callback
     # -----------------------------
     def refresh_cb(timer):
-        if not ui.is_screen_active("Sensors"):
+        if not ui.is_screen_active("Sensors") and not ui.SIMULATOR:
             return
 
         try:
@@ -371,7 +374,7 @@ def create_co2_screen(alt=False):
     }
     
     def set_co2_cb(t):
-        if not ui.is_screen_active("CO2"):
+        if not ui.is_screen_active("CO2") and not ui.SIMULATOR:
             return
 
         value = int(var.sensor_data.co2_scd41)

@@ -8,7 +8,10 @@ import math
 from ui import ui_generic as ui
 
 # ---- Global variables ----
-import shared_variables as var
+if ui.SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 def create_sensor_table(alt=False):
     lv = init()
@@ -109,7 +112,7 @@ def create_sensor_table(alt=False):
     import fs_driver
     fs_drv = lv.fs_drv_t()
     fs_driver.fs_register(fs_drv, 'S')
-    custom_font = lv.binfont_create("S:/fonts/font_consolas_14.bin")
+    custom_font = lv.binfont_create("S:fonts/font_consolas_14.bin")
     table.set_style_text_font(custom_font, 0) 
 
     # Styles
@@ -134,7 +137,7 @@ def create_sensor_table(alt=False):
         table.set_cell_value(row, col, value)
 
     def table_update_cb(task):
-        if not ui.is_screen_active("Sensor table", "alt"):
+        if not ui.is_screen_active("Sensor table", "alt") and not ui.SIMULATOR:
             return
 
         set_cell_if_changed(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))

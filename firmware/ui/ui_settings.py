@@ -8,7 +8,10 @@ import math
 from ui import ui_generic as ui
 
 # ---- Global variables ----
-import shared_variables as var
+if ui.SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 def create_roll_indicator_screen(alt=False):
 
@@ -129,7 +132,7 @@ def create_roll_indicator_screen(alt=False):
 
     # Periodic update timer
     def timer_cb(timer):
-        if not ui.is_screen_active("Roll", "alt"):
+        if not ui.is_screen_active("Roll", "alt") and not ui.SIMULATOR:
             return
 
         update_screen()
@@ -213,7 +216,7 @@ def create_ap_screen(alt=False):
 
     # Periodic checker
     def ap_timer_cb(timer):
-        if not ui.is_screen_active("Access Point", "alt"):
+        if not ui.is_screen_active("Access Point", "alt") and not ui.SIMULATOR:
             return
 
         try:
@@ -253,7 +256,7 @@ def create_timezone_screen(alt=False):
         return int(var.TZ_OFFSET // 3600)
 
     def set_hours(h):
-        var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
+        #var.audio_events.put_nowait(var.EVENT_AUDIO_SHORT)
         
         if h < -12:
             h = -12

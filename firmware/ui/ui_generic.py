@@ -4,8 +4,13 @@ import time
 import random
 import math
 
+SIMULATOR = False
+
 # ---- Global variables ----
-import shared_variables as var
+if SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 SCREEN_H = 240
 SCREEN_W = 240

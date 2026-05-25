@@ -8,7 +8,10 @@ import math
 from ui import ui_generic as ui
 
 # ---- Global variables ----
-import shared_variables as var
+if ui.SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 def co2_chart_draw_event_cb(e):
     lv = init()
@@ -247,7 +250,7 @@ def create_co2_chart_screen(alt=False):
     label.align(lv.ALIGN.TOP_MID, 0, 8)
     
     def update_co2_chart(timer):
-        if not ui.is_screen_active("CO2 chart"):
+        if not ui.is_screen_active("CO2 chart") and not ui.SIMULATOR:
             return
         
         value = int(var.sensor_data.co2_scd41)

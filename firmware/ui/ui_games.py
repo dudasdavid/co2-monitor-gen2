@@ -8,7 +8,10 @@ import math
 from ui import ui_generic as ui
 
 # ---- Global variables ----
-import shared_variables as var
+if ui.SIMULATOR:
+    import fake_shared_variables as var
+else:
+    import shared_variables as var
 
 def create_snake_screen(alt=False, game=True):
 
@@ -134,7 +137,7 @@ def create_snake_screen(alt=False, game=True):
     def snake_tick(timer):
         nonlocal snake, food
 
-        if not ui.is_screen_active("Snake", "game"):
+        if not ui.is_screen_active("Snake", "game") and not ui.SIMULATOR:
             return
 
         hx, hy = snake[0]
