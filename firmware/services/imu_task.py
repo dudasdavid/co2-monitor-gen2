@@ -21,7 +21,6 @@ atan_lut = [
 
 ROLL_INVERT = False
 
-G = 9.81
 ACC_TRUST_MIN = 7.5
 ACC_TRUST_MAX = 12.5
 
@@ -176,4 +175,3 @@ async def imu_task(i2c_bus, period = 1.0):
         var.system_data.imu_task_timestamp = time.time()
         
         await asyncio.sleep(period)
-

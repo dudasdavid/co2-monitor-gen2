@@ -1,8 +1,5 @@
 from lv_port import init
-from math import ceil, sin
 import time
-import random
-import math
 
 SIMULATOR = False
 
@@ -14,12 +11,6 @@ else:
 
 SCREEN_H = 240
 SCREEN_W = 240
-STATUS_BAR_H = 24
-PAGE_W_PADDING = 0
-
-# ---- Swipe handling ----
-SWIPE_THRESHOLD = 40   # pixels
-LOCK_THRESHOLD  = 12  # when horizontal movement is clearly starting
 
 def localtime_with_offset(offset_sec=var.TZ_OFFSET):
     # get current UTC epoch
