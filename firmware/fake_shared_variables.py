@@ -15,10 +15,7 @@ class SensorData:
 
 class SystemData:
     def __init__(self):
-        self.time_ntp = [1999, 1, 2, 11, 6, 11, 3, 78]
         self.time_rtc = [2001, 2, 3, 12, 9, 12, 4, 69]
-        self.status_wifi = "192.168.1.69"
-        self.status_ap = "Not Connected"
         self.mqtt_server_connection = "Remote"
         self.total_space_flash = 16000
         self.used_space_flash = 1200
@@ -34,16 +31,11 @@ system_data = SystemData()
 
 TZ_OFFSET = 2*60*60 # In seconds, e.g. for UTC+2: 2*60*60
 
-wifi_disabled = False
 ap_request = False
 ap_enabled = False
 ap_disable_timer = 69
 wifi_connected = True
 wifi_connecting = False
-ntp_time_synchronized = False
-rtc_time_synchronized = False
-first_connect = True
-ssid_save_successful = False
 wifi_ip = "192.168.1.69"
 wifi_sleep = False
 sleep_till_next_connection = 0
@@ -62,13 +54,6 @@ current_idx_game = 0
 selected_alt = 0
 selected_game = 0
 
-# Max number of samples you expect (24h at 5 min)
-CO2_HISTORY_MAX = 12 * 24
-
-scd41_co2_peak_ppm = 400
-scd41_co2_threshold = 1800
-scd41_co2_detected = 0
-
 scd41_co2_history = [
     500, 595, 700, 795, 880, 920, 950, 950,
     922, 890, 838, 800, 760, 722, 688, 660,
@@ -79,6 +64,3 @@ scd41_co2_history = [
 ]
 
 scd41_co2_max_display_history = 4*12 # 4 hours with 5min resolution
-
-history_loaded = True
-
