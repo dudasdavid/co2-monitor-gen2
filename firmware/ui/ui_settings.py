@@ -270,6 +270,9 @@ def create_timezone_screen(alt=False):
         # Update persistent_config.py
         # -----------------------------
         try:
+            if ui.SIMULATOR:
+                raise Exception("No file writing in simulator")
+
             with open("persistent_config.py", "r") as f:
                 lines = f.readlines()
 
