@@ -16,6 +16,27 @@ else:
 SCREEN_H = 240
 SCREEN_W = 240
 
+font_consolas_14 = None
+font_montserrat_16_semibold = None
+_font_fs_drv = None
+
+def load_fonts():
+    global font_consolas_14, font_montserrat_16_semibold, _font_fs_drv
+
+    if font_consolas_14 is not None:
+        return
+
+    lv = init()
+
+    # Load a custom font in bin format converted by https://lvgl.io/tools/fontconverter
+    # Use this range during conversion to include special characters too:
+    # 0x20-0x7F,0xA0-0x17F,0x2000-0x206F,0x20A0-0x20CF,0x2100-0x214F,0x2200-0x22FF,0x25A0-0x25FF
+    import fs_driver
+    _font_fs_drv = lv.fs_drv_t()
+    fs_driver.fs_register(_font_fs_drv, 'S')
+    font_consolas_14 = lv.binfont_create("S:fonts/font_consolas_14.bin")
+    font_montserrat_16_semibold = lv.binfont_create("S:fonts/font_montserrat_16_semibold.bin")
+
 def localtime_with_offset(offset_sec=var.TZ_OFFSET):
     # get current UTC epoch
     utc_epoch = time.time()

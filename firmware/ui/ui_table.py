@@ -106,14 +106,8 @@ def create_sensor_table(alt=False):
     # Default font type
     #table.set_style_text_font(lv.font_montserrat_14, 0)
     
-    # Load a custom font in bin format converted by https://lvgl.io/tools/fontconverter
-    # Use this range during conversion to include special characters too:
-    # 0x20-0x7F,0xA0-0x17F,0x2000-0x206F,0x20A0-0x20CF,0x2100-0x214F,0x2200-0x22FF,0x25A0-0x25FF
-    import fs_driver
-    fs_drv = lv.fs_drv_t()
-    fs_driver.fs_register(fs_drv, 'S')
-    custom_font = lv.binfont_create("S:fonts/font_consolas_14.bin")
-    table.set_style_text_font(custom_font, 0) 
+    ui.load_fonts()
+    table.set_style_text_font(ui.font_consolas_14, 0)
 
     # Styles
     #table.set_style_bg_color(lv.color_hex(0x101010), 0)
