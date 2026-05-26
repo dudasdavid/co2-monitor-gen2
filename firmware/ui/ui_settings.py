@@ -181,6 +181,10 @@ def create_ap_screen(alt=False):
     btn_ap.set_style_radius(18, 0)
     btn_ap.set_style_pad_all(0, 0)
     btn_ap.set_style_border_width(0, 0)
+    btn_ap.set_style_bg_color(lv.color_hex(0x007D99), lv.STATE.PRESSED)
+    btn_ap.set_style_border_width(2, lv.STATE.PRESSED)
+    btn_ap.set_style_border_color(lv.color_hex(0xA8F0FF), lv.STATE.PRESSED)
+    btn_ap.set_style_translate_y(2, lv.STATE.PRESSED)
 
     btn_label = lv.label(btn_ap)
     btn_label.set_text("ACTIVATE AP")
