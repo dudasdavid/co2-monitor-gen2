@@ -2,6 +2,7 @@ from micropython import const  # NOQA
 import lcd_bus  # NOQA
 from lv_port import init
 import time
+import sys
 
 lv = None
 bus = None
@@ -43,6 +44,9 @@ def init_display():
 
 def main():
 
+  print("Running on", sys.platform)
+  #print(sys.implementation)
+
   init_display()
 
   from ui import ui_generic
@@ -63,7 +67,7 @@ def main():
   scr8 = ui_games.create_snake_screen(game = True)["scr"]
   scr9 = ui_welcome.create_welcome_screen()
 
-  lv.screen_load(scr9)
+  lv.screen_load(scr5)
 
   # If not running from REPL this keeps it alive.
   while True:

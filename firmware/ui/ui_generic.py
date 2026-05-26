@@ -1,7 +1,11 @@
 from lv_port import init
 import time
+import sys
 
-SIMULATOR = False
+if sys.platform == "darwin":
+    SIMULATOR = True
+else:
+    SIMULATOR = False
 
 # ---- Global variables ----
 if SIMULATOR:
