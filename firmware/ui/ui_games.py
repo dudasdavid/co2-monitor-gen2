@@ -117,6 +117,7 @@ def create_snake_screen(alt=False, game=True):
         o.set_size(CELL - 1, CELL - 1)
         o.set_style_bg_opa(lv.OPA.COVER, 0)
         o.set_style_border_width(0, 0)
+        o.remove_flag(lv.obj.FLAG.CLICKABLE)
         o.remove_flag(lv.obj.FLAG.SCROLLABLE)
         return o
 
@@ -127,6 +128,7 @@ def create_snake_screen(alt=False, game=True):
         o.set_style_bg_color(food_color, 0)
         o.set_style_bg_opa(opa, 0)
         o.set_style_border_width(0, 0)
+        o.remove_flag(lv.obj.FLAG.CLICKABLE)
         o.remove_flag(lv.obj.FLAG.SCROLLABLE)
         return o
 
@@ -291,10 +293,26 @@ def create_snake_screen(alt=False, game=True):
         feedback["turn_ticks"] = 1
         update_feedback()
 
+    def simulator_click_cb(e):
+        indev = lv.indev_active()
+        if indev is None:
+            return
+
+        point = lv.point_t()
+        indev.get_point(point)
+        if point.y < ui.SCREEN_H // 2:
+            turn_right()
+        else:
+            turn_left()
+
     update_score()
     draw()
 
     snake_timer = lv.timer_create(snake_tick, 400, None)
+
+    if ui.SIMULATOR:
+        scr.add_flag(lv.obj.FLAG.CLICKABLE)
+        scr.add_event_cb(simulator_click_cb, lv.EVENT.CLICKED, None)
 
     scr.add_event_cb(ui.swipe_event_cb, lv.EVENT.ALL, None)
 
