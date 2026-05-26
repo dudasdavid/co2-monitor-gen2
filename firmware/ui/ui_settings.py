@@ -70,17 +70,34 @@ def create_roll_indicator_screen(alt=False):
     # Roll label
     # =========================
 
-    roll_lbl = lv.label(scr)
+    ui.load_fonts()
+
+    roll_lbl = lv.arclabel(scr)
+    roll_lbl.set_size(240, 240)
+    roll_lbl.center()
+    roll_lbl.set_style_text_font(ui.font_montserrat_16_semibold, 0)
     roll_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    roll_lbl.align(lv.ALIGN.TOP_MID, 0, 15)
+    roll_lbl.set_radius(107)
+    roll_lbl.set_angle_start(225)
+    roll_lbl.set_angle_size(90)
+    roll_lbl.set_text_vertical_align(lv.arclabel.TEXT_ALIGN.CENTER)
+    roll_lbl.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
 
     # =========================
     # Pitch label
     # =========================
 
-    pitch_lbl = lv.label(scr)
+    pitch_lbl = lv.arclabel(scr)
+    pitch_lbl.set_size(240, 240)
+    pitch_lbl.center()
+    pitch_lbl.set_style_text_font(ui.font_montserrat_16_semibold, 0)
     pitch_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    pitch_lbl.align(lv.ALIGN.BOTTOM_MID, 0, -15)
+    pitch_lbl.set_radius(107)
+    pitch_lbl.set_angle_start(45)
+    pitch_lbl.set_angle_size(90)
+    pitch_lbl.set_dir(lv.arclabel.DIR.COUNTER_CLOCKWISE)
+    pitch_lbl.set_text_vertical_align(lv.arclabel.TEXT_ALIGN.CENTER)
+    pitch_lbl.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
 
     # =========================
     # Update function
