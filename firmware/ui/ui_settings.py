@@ -303,6 +303,15 @@ def create_timezone_screen(alt=False):
         sign = "+" if h >= 0 else ""
         label.set_text("UTC {}{}".format(sign, h))
 
+    def style_adjust_button(btn):
+        btn.set_style_bg_color(lv.color_hex(0x333333), 0)
+        btn.set_style_bg_color(lv.color_hex(0x007D99), lv.STATE.PRESSED)
+        btn.set_style_radius(10, 0)
+        btn.set_style_border_width(0, 0)
+        btn.set_style_border_width(2, lv.STATE.PRESSED)
+        btn.set_style_border_color(lv.color_hex(0xA8F0FF), lv.STATE.PRESSED)
+        btn.set_style_translate_y(2, lv.STATE.PRESSED)
+
     # Curved title
     title = lv.arclabel(scr)
     title.set_size(240, 240)
@@ -326,9 +335,7 @@ def create_timezone_screen(alt=False):
     btn_plus.set_size(100, 60)
     btn_plus.align(lv.ALIGN.TOP_MID, 0, 40)
 
-    # Make it look like a button
-    btn_plus.set_style_bg_color(lv.color_hex(0x333333), 0)
-    btn_plus.set_style_radius(10, 0)
+    style_adjust_button(btn_plus)
 
     label_plus = lv.label(btn_plus)
     label_plus.set_text("+")
@@ -345,8 +352,7 @@ def create_timezone_screen(alt=False):
     btn_minus.set_size(100, 60)
     btn_minus.align(lv.ALIGN.BOTTOM_MID, 0, -20)
 
-    btn_minus.set_style_bg_color(lv.color_hex(0x333333), 0)
-    btn_minus.set_style_radius(10, 0)
+    style_adjust_button(btn_minus)
 
     label_minus = lv.label(btn_minus)
     label_minus.set_text("-")
