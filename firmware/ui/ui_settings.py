@@ -166,11 +166,13 @@ def create_ap_screen(alt=False):
     title.set_size(240, 240)
     title.center()
     title.set_text("ACCESS POINT")
-    title.set_style_text_font(lv.font_montserrat_14, 0)
+    ui.load_fonts()
+    title.set_style_text_font(ui.font_montserrat_16_semibold, 0)
     title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    title.set_radius(100)
-    title.set_angle_start(245)
-    title.set_angle_size(110)
+    title.set_radius(102)
+    title.set_angle_start(225)
+    title.set_angle_size(90)
+    title.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
 
     # Big button
     btn_ap = lv.obj(scr)
