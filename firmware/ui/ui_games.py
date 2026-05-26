@@ -20,21 +20,45 @@ def create_snake_screen(alt=False, game=True):
     scr = lv.obj()
     scr.set_style_bg_color(lv.color_hex(0x000000), 0)
     scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
-    
-    # Curved title
+
+    ui.load_fonts()
+
+    wall_color = lv.color_hex(0x00FF55)
+    wall_dim_color = lv.color_hex(0x123A25)
+    text_color = lv.color_hex(0xC8E8D2)
+    head_color = lv.color_hex(0x00FF55)
+    body_color = lv.color_hex(0x00B844)
+    # The SDL/display color ordering renders this as warm amber.
+    food_color = lv.color_hex(0x00A5FF)
+
+    # Curved controls prompt on the outer rim
     title = lv.arclabel(scr)
     title.set_size(240, 240)
     title.center()
     title.set_text("<  TURN  >")
-    ui.load_fonts()
     title.set_style_text_font(ui.font_montserrat_16_semibold, 0)
-    title.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    title.set_radius(102)
+    title.set_style_text_color(text_color, 0)
+    title.set_radius(101)
     title.set_angle_start(225)
     title.set_angle_size(90)
+    title.set_text_vertical_align(lv.arclabel.TEXT_ALIGN.CENTER)
     title.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
 
-    # Circular wall
+    # Edge-to-edge glowing arena wall frames the round display.
+    ring_glow = lv.arc(scr)
+    ring_glow.remove_style_all()
+    ring_glow.remove_flag(lv.obj.FLAG.CLICKABLE)
+    ring_glow.set_size(240, 240)
+    ring_glow.align(lv.ALIGN.CENTER, 0, 0)
+    ring_glow.set_rotation(270)
+    ring_glow.set_bg_angles(0, 360)
+    ring_glow.set_range(0, 100)
+    ring_glow.set_value(100)
+    ring_glow.set_style_pad_all(0, 0)
+    ring_glow.set_style_arc_width(7, lv.PART.INDICATOR)
+    ring_glow.set_style_arc_color(wall_color, lv.PART.INDICATOR)
+    ring_glow.set_style_arc_opa(lv.OPA._20, lv.PART.INDICATOR)
+
     ring = lv.arc(scr)
     ring.remove_style_all()
     ring.remove_flag(lv.obj.FLAG.CLICKABLE)
@@ -47,21 +71,39 @@ def create_snake_screen(alt=False, game=True):
     ring.set_style_pad_all(0, 0)
 
     ring.set_style_arc_width(2, lv.PART.MAIN)
-    ring.set_style_arc_color(lv.color_hex(0x103810), lv.PART.MAIN)
+    ring.set_style_arc_color(wall_dim_color, lv.PART.MAIN)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.MAIN)
 
     ring.set_style_arc_width(2, lv.PART.INDICATOR)
-    ring.set_style_arc_color(lv.color_hex(0x888888), lv.PART.INDICATOR)
+    ring.set_style_arc_color(wall_color, lv.PART.INDICATOR)
     ring.set_style_arc_opa(lv.OPA.COVER, lv.PART.INDICATOR)
+
+    score_lbl = lv.arclabel(scr)
+    score_lbl.set_size(240, 240)
+    score_lbl.center()
+    score_lbl.set_style_text_font(ui.font_montserrat_16_semibold, 0)
+    score_lbl.set_style_text_color(text_color, 0)
+    score_lbl.set_radius(101)
+    score_lbl.set_angle_start(45)
+    score_lbl.set_angle_size(90)
+    score_lbl.set_dir(lv.arclabel.DIR.COUNTER_CLOCKWISE)
+    score_lbl.set_text_vertical_align(lv.arclabel.TEXT_ALIGN.CENTER)
+    score_lbl.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
+    title.move_foreground()
+    score_lbl.move_foreground()
 
     # Snake game logic
     GRID_W = 24
     GRID_H = 24
     CELL = 10
+    ARENA_RADIUS = 112
+    FOOD_RADIUS = 104
 
     snake = [(5, 12), (4, 12), (3, 12)]
     food = [15, 12]
     direction = [1, 0]
+    score = 0
+    feedback = {"food_ticks": 0, "turn_ticks": 0}
 
     cells = []
 
@@ -70,45 +112,87 @@ def create_snake_screen(alt=False, game=True):
     offset_x = (240 - game_w) // 2
     offset_y = (240 - game_h) // 2
 
-    green = lv.color_hex(0x00ff00)
-    red = lv.color_hex(0x0000ff)
-
-    def make_cell(color):
+    def make_cell():
         o = lv.obj(scr)
         o.set_size(CELL - 1, CELL - 1)
-        o.set_style_bg_color(color, 0)
         o.set_style_bg_opa(lv.OPA.COVER, 0)
         o.set_style_border_width(0, 0)
         o.remove_flag(lv.obj.FLAG.SCROLLABLE)
         return o
 
-    food_obj = make_cell(red)
+    def make_food_marker(size, opa):
+        o = lv.obj(scr)
+        o.set_size(size, size)
+        o.set_style_radius(size // 2, 0)
+        o.set_style_bg_color(food_color, 0)
+        o.set_style_bg_opa(opa, 0)
+        o.set_style_border_width(0, 0)
+        o.remove_flag(lv.obj.FLAG.SCROLLABLE)
+        return o
 
-    def place_obj(o, x, y):
-        o.set_pos(offset_x + x * CELL, offset_y + y * CELL)
+    food_halo = make_food_marker(17, lv.OPA._20)
+    food_obj = make_food_marker(9, lv.OPA.COVER)
+
+    def place_obj(o, x, y, size):
+        o.set_pos(
+            offset_x + x * CELL + (CELL - size) // 2,
+            offset_y + y * CELL + (CELL - size) // 2
+        )
+
+    def update_score():
+        score_lbl.set_text("SCORE %02d" % score)
+
+    def update_feedback():
+        if feedback["food_ticks"] > 0:
+            ring.set_style_arc_color(food_color, lv.PART.INDICATOR)
+            ring_glow.set_style_arc_opa(lv.OPA._60, lv.PART.INDICATOR)
+            food_halo.set_style_bg_opa(lv.OPA._50, 0)
+            feedback["food_ticks"] -= 1
+        else:
+            ring.set_style_arc_color(wall_color, lv.PART.INDICATOR)
+            ring_glow.set_style_arc_opa(lv.OPA._20, lv.PART.INDICATOR)
+            food_halo.set_style_bg_opa(lv.OPA._20, 0)
+
+        if feedback["turn_ticks"] > 0:
+            title.set_style_text_color(wall_color, 0)
+            feedback["turn_ticks"] -= 1
+        else:
+            title.set_style_text_color(text_color, 0)
 
     def draw():
         nonlocal cells
 
         while len(cells) < len(snake):
-            cells.append(make_cell(green))
+            cells.append(make_cell())
 
         for i, (x, y) in enumerate(snake):
+            size = CELL - 1
+            radius = size // 2
+            if i == 0:
+                color = head_color
+            else:
+                color = body_color
+
+            cells[i].set_size(size, size)
+            cells[i].set_style_radius(radius, 0)
+            cells[i].set_style_bg_color(color, 0)
+            cells[i].set_style_shadow_width(6 if i == 0 else 0, 0)
+            cells[i].set_style_shadow_color(head_color, 0)
+            cells[i].set_style_shadow_opa(lv.OPA._50 if i == 0 else lv.OPA.TRANSP, 0)
             cells[i].remove_flag(lv.obj.FLAG.HIDDEN)
-            place_obj(cells[i], x, y)
+            place_obj(cells[i], x, y, size)
 
         for i in range(len(snake), len(cells)):
             cells[i].add_flag(lv.obj.FLAG.HIDDEN)
 
-        place_obj(food_obj, food[0], food[1])
+        place_obj(food_halo, food[0], food[1], 17)
+        place_obj(food_obj, food[0], food[1], 9)
 
     def new_food():
         # Round display parameters
         cx = GRID_W * CELL // 2
         cy = GRID_H * CELL // 2
         # place foods within a smaller circle than the screen (and walls)
-        radius = 100
-
         while True:
             gx = random.randrange(GRID_W)
             gy = random.randrange(GRID_H)
@@ -124,21 +208,26 @@ def create_snake_screen(alt=False, game=True):
             dy = py - cy
 
             # Inside circle?
-            if dx * dx + dy * dy <= radius * radius:
+            if dx * dx + dy * dy <= FOOD_RADIUS * FOOD_RADIUS:
                 return [gx, gy]
 
     def reset_game():
-        nonlocal snake, food, direction
+        nonlocal snake, food, direction, score
         snake = [(5, 12), (4, 12), (3, 12)]
         direction = [1, 0]
+        score = 0
+        feedback["food_ticks"] = 0
         food = new_food()
+        update_score()
         draw()
 
     def snake_tick(timer):
-        nonlocal snake, food
+        nonlocal snake, food, score
 
         if not ui.is_screen_active("Snake", "game") and not ui.SIMULATOR:
             return
+
+        update_feedback()
 
         hx, hy = snake[0]
         nx = hx + direction[0]
@@ -152,13 +241,11 @@ def create_snake_screen(alt=False, game=True):
         # Screen center
         cx = GRID_W * CELL // 2
         cy = GRID_H * CELL // 2
-        radius = 120
-
         dxc = px - cx
         dyc = py - cy
 
         outside_circle = (
-            dxc * dxc + dyc * dyc > radius * radius
+            dxc * dxc + dyc * dyc > ARENA_RADIUS * ARENA_RADIUS
         )
 
         if outside_circle or new_head in snake:
@@ -168,7 +255,11 @@ def create_snake_screen(alt=False, game=True):
         snake.insert(0, new_head)
 
         if nx == food[0] and ny == food[1]:
+            score += 1
             food = new_food()
+            feedback["food_ticks"] = 2
+            update_score()
+            update_feedback()
         else:
             snake.pop()
 
@@ -187,6 +278,8 @@ def create_snake_screen(alt=False, game=True):
         # 90° CCW
         direction[0] = -dy
         direction[1] = dx
+        feedback["turn_ticks"] = 1
+        update_feedback()
 
     def turn_right():
         dx = direction[0]
@@ -195,7 +288,10 @@ def create_snake_screen(alt=False, game=True):
         # 90° CW
         direction[0] = dy
         direction[1] = -dx
+        feedback["turn_ticks"] = 1
+        update_feedback()
 
+    update_score()
     draw()
 
     snake_timer = lv.timer_create(snake_tick, 400, None)

@@ -305,7 +305,7 @@ async def main():
     ui_settings.create_timezone_screen(alt = True)               # Performance ✅
     ui_settings.create_ap_screen(alt = True)                     # Performance ✅
     ui_settings.create_roll_indicator_screen(alt = True)         # Performance ✅
-    var.snake_screen = ui_games.create_snake_screen(game = True) # Performance ✅
+    var.snake_screen = ui_games.create_snake_screen(game = True) # Performance TO BE CHECKED
     #ui_generic.create_dummy_screen()
     ui_generic.show_screen(0, lv.SCREEN_LOAD_ANIM.FADE_IN) # start with screen 0
 
