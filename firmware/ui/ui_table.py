@@ -102,23 +102,43 @@ def create_sensor_table(alt=False):
     table.set_cell_value(21, 1, "MQTT server")
     table.set_cell_value(22, 1, "/ storage")
     table.set_cell_value(23, 1, "RAM")
-    
+
     # Default font type
     #table.set_style_text_font(lv.font_montserrat_14, 0)
-    
+
     ui.load_fonts()
     table.set_style_text_font(ui.font_consolas_14, 0)
+
+    label_color = lv.color_hex(0x00FF33)
+    value_color = lv.color_hex(0x00FF33)
 
     # Styles
     #table.set_style_bg_color(lv.color_hex(0x101010), 0)
     table.set_style_bg_color(lv.color_hex(0x000000), lv.PART.MAIN)
     table.set_style_bg_color(lv.color_hex(0x000000), lv.PART.ITEMS)
     table.set_style_bg_opa(lv.OPA.COVER, lv.PART.ITEMS)
-    table.set_style_text_color(lv.color_hex(0x00ff33), lv.PART.ITEMS)
+    table.set_style_text_color(value_color, lv.PART.ITEMS)
     #table.set_style_text_font(lv.font_unscii_8, lv.PART.ITEMS)
     table.set_style_border_color(lv.color_hex(0x000000), lv.PART.ITEMS)
     # Remove outside borders
     table.set_style_border_width(0, lv.PART.MAIN)
+
+    def table_draw_cb(e):
+        draw_task = e.get_draw_task()
+        if draw_task is None or draw_task.get_type() != lv.DRAW_TASK_TYPE.LABEL:
+            return
+
+        label_dsc = draw_task.get_label_dsc()
+        if label_dsc is None or label_dsc.base.part != lv.PART.ITEMS:
+            return
+
+        if label_dsc.base.id2 == 1:
+            label_dsc.color = label_color
+        elif label_dsc.base.id2 == 2:
+            label_dsc.color = value_color
+
+    table.add_flag(lv.obj.FLAG.SEND_DRAW_TASK_EVENTS)
+    table.add_event_cb(table_draw_cb, lv.EVENT.DRAW_TASK_ADDED, None)
 
     cell_cache = {}
 
@@ -159,7 +179,6 @@ def create_sensor_table(alt=False):
         set_cell_if_changed(15, 2, date_str)
         set_cell_if_changed(16, 2, time_str)
 
-
         timestamp = ui.localtime_with_offset(var.TZ_OFFSET)
         date_str = f"{timestamp[0]:04d}-{timestamp[1]:02d}-{timestamp[2]:02d}"
         time_str = f"{timestamp[3]:02d}:{timestamp[4]:02d}:{timestamp[5]:02d}"
@@ -172,7 +191,7 @@ def create_sensor_table(alt=False):
             set_cell_if_changed(19, 2, "Requested...")
         else:
             set_cell_if_changed(19, 2, "Disabled")
-            
+
         if var.wifi_connected:
             set_cell_if_changed(20, 2, var.wifi_ip)
         elif var.ap_enabled:

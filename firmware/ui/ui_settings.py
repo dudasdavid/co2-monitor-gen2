@@ -70,6 +70,19 @@ def create_roll_indicator_screen(alt=False):
     # Roll label
     # =========================
 
+    roll_lbl = lv.label(scr)
+    roll_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    roll_lbl.align(lv.ALIGN.TOP_MID, 0, 15)
+
+    # =========================
+    # Pitch label
+    # =========================
+
+    pitch_lbl = lv.label(scr)
+    pitch_lbl.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+    pitch_lbl.align(lv.ALIGN.BOTTOM_MID, 0, -15)
+
+    '''
     ui.load_fonts()
 
     roll_lbl = lv.arclabel(scr)
@@ -98,7 +111,7 @@ def create_roll_indicator_screen(alt=False):
     pitch_lbl.set_dir(lv.arclabel.DIR.COUNTER_CLOCKWISE)
     pitch_lbl.set_text_vertical_align(lv.arclabel.TEXT_ALIGN.CENTER)
     pitch_lbl.set_text_horizontal_align(lv.arclabel.TEXT_ALIGN.CENTER)
-
+    '''
     # =========================
     # Update function
     # =========================

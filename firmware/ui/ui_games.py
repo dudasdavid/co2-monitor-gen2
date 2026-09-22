@@ -229,7 +229,7 @@ def create_snake_screen(alt=False, game=True):
         if not ui.is_screen_active("Snake", "game") and not ui.SIMULATOR:
             return
 
-        update_feedback()
+        #update_feedback()
 
         hx, hy = snake[0]
         nx = hx + direction[0]
@@ -261,7 +261,7 @@ def create_snake_screen(alt=False, game=True):
             food = new_food()
             feedback["food_ticks"] = 2
             update_score()
-            update_feedback()
+            #update_feedback()
         else:
             snake.pop()
 
@@ -281,7 +281,7 @@ def create_snake_screen(alt=False, game=True):
         direction[0] = -dy
         direction[1] = dx
         feedback["turn_ticks"] = 1
-        update_feedback()
+        #update_feedback()
 
     def turn_right():
         dx = direction[0]
@@ -291,7 +291,7 @@ def create_snake_screen(alt=False, game=True):
         direction[0] = dy
         direction[1] = -dx
         feedback["turn_ticks"] = 1
-        update_feedback()
+        #update_feedback()
 
     def simulator_click_cb(e):
         indev = lv.indev_active()
