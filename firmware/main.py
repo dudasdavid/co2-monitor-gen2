@@ -14,7 +14,7 @@ try:
     import uasyncio as asyncio
     import shared_variables as var
 
-    if var.hw_variant not in ["i80", "spi"]:
+    if var.hw_variant not in ["i80", "spi", "i80_new"]:
         raise OSError("Hardware variant is not selected!")
     if not var.debug:
         import main_dev

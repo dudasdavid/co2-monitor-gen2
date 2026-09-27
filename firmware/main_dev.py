@@ -237,7 +237,7 @@ async def main():
     await asyncio.sleep(0.2)
     
     # 2) initialize display
-    if var.hw_variant == "i80":
+    if var.hw_variant in ["i80", "i80_new"]:
         display = init_display_i80()
     elif var.hw_variant == "spi":
         display = init_display_spi()
@@ -281,9 +281,12 @@ async def main():
     # 5.3) Spawn some HW dependent services
     if var.hw_variant == "i80":
         asyncio.create_task(io_expander_task(i2c_bus, 0.5))      # Performance ✅
-        asyncio.create_task(imu_task(i2c_bus, 0.04))             # Performance ✅
+        asyncio.create_task(imu_task(i2c_bus, 0x6b, 0.04))       # Performance ✅
         asyncio.create_task(rtc_task(i2c_bus, 10))               # Performance ✅
         pass
+    elif var.hw_variant == "i80_new":
+        asyncio.create_task(io_expander_task(i2c_bus, 0.5))      # Performance ✅
+        asyncio.create_task(imu_task(i2c_bus, 0x6a, 0.04))       # Performance ✅
     elif var.hw_variant == "spi":
         asyncio.create_task(io_task(0.5))                        # Performance ✅
         pass

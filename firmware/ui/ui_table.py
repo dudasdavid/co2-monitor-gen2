@@ -157,7 +157,7 @@ def create_sensor_table(alt=False):
         set_cell_if_changed(0, 2, "{:.1f}".format(var.sensor_data.temp_scd41))
         if var.hw_variant == "i80":
             set_cell_if_changed(1, 2, "{:.1f}".format(var.sensor_data.temp_qmi8658c))
-        elif var.hw_variant == "spi":
+        elif var.hw_variant in ["spi", "i80_new"]:
             set_cell_if_changed(1, 2, "{:.1f}".format(var.sensor_data.temp_ds3231))
         set_cell_if_changed(2, 2, "{:.1f}".format(var.sensor_data.humidity_scd41))
         set_cell_if_changed(3, 2, "{}".format(int(var.sensor_data.co2_scd41)))

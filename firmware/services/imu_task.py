@@ -141,10 +141,10 @@ def calculate_roll_pitch_simple_lut(acc):
     
     return roll_deg, pitch_deg
 
-async def imu_task(i2c_bus, period = 1.0):
+async def imu_task(i2c_bus, address = 0x6b, period = 1.0):
     #Init
     
-    imu_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=0x6b, reg_bits=8)
+    imu_dev = i2c.I2C.Device(bus=i2c_bus, dev_id=address, reg_bits=8)
     imu = qmi8658c.QMI8658C(imu_dev, accel_range=qmi8658c.ACCEL_RANGE_4, gyro_range=qmi8658c.GYRO_RANGE_64)
 
     #Run

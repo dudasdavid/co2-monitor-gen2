@@ -95,7 +95,7 @@ async def sensor_task(period = 1.0):
     except:
         log.error("SCD41 cannot be initialized!")
     
-    if var.hw_variant == "spi":
+    if var.hw_variant in ["spi", "i80_new"]:
         # Initialize the DS3231 RTC
         try:
             ds3231 = ds3231_driver.DS3231(i2c1_bus)
@@ -197,7 +197,7 @@ async def sensor_task(period = 1.0):
                 log.error("SCD41 communication error")
 
 
-        if ds3231 is not None and var.hw_variant == "spi" and i % 10 == 0:
+        if ds3231 is not None and var.hw_variant in ["spi", "i80_new"] and i % 10 == 0:
             try:
                 rtc_time = ds3231.datetime()
                 await asyncio.sleep_ms(1)
