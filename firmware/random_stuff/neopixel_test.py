@@ -37,7 +37,7 @@ def convert_hsv2rgb(h,s,v):
 
     return (int(r * 255), int(g * 255), int(b * 255))
 
-pin = Pin(44, Pin.OUT)
+pin = Pin(43, Pin.OUT)
 np = neopixel.NeoPixel(pin, 20)
 
 phase = 0
