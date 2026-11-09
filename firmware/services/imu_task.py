@@ -76,10 +76,19 @@ def angle_lerp(a, b, t):
     d = wrap_180(b - a)
     return a + d * t
 
+def device_acceleration(acc):
+    # Rotate sensor axes into the device frame before calculating angles.
+    # i80_new has a 90-degree rotation about sensor Z relative to i80.
+    ax, ay, az = acc
+    if var.hw_variant == "i80_new":
+        return ay, -ax, az
+    return ax, ay, az
+
+
 def calculate_roll_pitch(acc):
     global last_roll, last_pitch
     
-    ax, ay, az = acc
+    ax, ay, az = device_acceleration(acc)
     
     # Validate acceleration magnitude if there is any high force impact to reject
     acc_mag = math.sqrt(ax * ax + ay * ay + az * az)
@@ -88,9 +97,9 @@ def calculate_roll_pitch(acc):
         log.warning("Acceleration input was rejected, using last calculated angles. Acceleration magnitude:", acc_mag)
         return last_roll, last_pitch
     
-    # Pitch:
-    # compare X gravity component against the remaining YZ gravity magnitude
-    pitch_rad = -math.atan2(-ax, math.sqrt(ay * ay + az * az))
+    # Desk-facing Z is negative. Preserve its sign so pitch can cross 90
+    # degrees when the device tilts past vertical.
+    pitch_rad = math.atan2(ax, -az)
 
     # Roll:
     # compare Y gravity component against the remaining XZ gravity magnitude
@@ -98,7 +107,7 @@ def calculate_roll_pitch(acc):
     roll_rad = math.atan2(ay, math.sqrt(ax * ax + az * az))
 
     roll_deg = math.degrees(roll_rad)
-    pitch_deg = math.degrees(pitch_rad) - var.pitch_offset
+    pitch_deg = wrap_180(math.degrees(pitch_rad) - var.pitch_offset)
 
     if ROLL_INVERT:
         roll_deg = -roll_deg
@@ -113,7 +122,7 @@ def calculate_roll_pitch(acc):
 def calculate_roll_pitch_simple_lut(acc):
     global last_roll, last_pitch
     
-    ax, ay, az = acc
+    ax, ay, az = device_acceleration(acc)
 
     # Validate acceleration magnitude if there is any high force impact to reject
     acc_mag = math.sqrt(ax * ax + ay * ay + az * az)
@@ -122,9 +131,8 @@ def calculate_roll_pitch_simple_lut(acc):
         log.warning("Acceleration input was rejected, using last calculated angles. Acceleration magnitude:", acc_mag)
         return last_roll, last_pitch
 
-    # pitch: X against the remaining gravity vector
-    horiz_yz = math.sqrt(ay * ay + az * az)
-    pitch_deg = -fast_atan2_deg(-ax, horiz_yz) - var.pitch_offset
+    # Match the full-range pitch calculation above, including past vertical.
+    pitch_deg = wrap_180(fast_atan2_deg(ax, -az) - var.pitch_offset)
 
     # Continuous roll proxy:
     # use X when vertical, use Z when flat, smoothly via gravity vector magnitude

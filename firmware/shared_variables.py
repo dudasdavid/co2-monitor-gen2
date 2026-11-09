@@ -8,8 +8,13 @@ serial_number = 0
 hostname = "CO2-Sensor-SNr"+str(serial_number)
 temp_cal_A = 1
 temp_cal_B = 0
-roll_offset = 0
-pitch_offset = 0
+# Offsets are subtracted after rotating the IMU into the device frame - in degrees
+if hw_variant == "i80_new":
+    roll_offset = 0.0
+    pitch_offset = 40.0
+else:
+    roll_offset = 0.0
+    pitch_offset = 0.0
 
 class SimpleQueue:
     def __init__(self):
